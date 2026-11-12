@@ -1,0 +1,2231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demand &amp; Purchase Planning | ReSupply AI</title>
+  <style>
+    :root { color-scheme: light; --ink:#18291f; --muted:#647268; --green:#246647; --line:#dce5de; --paper:#fff; --background:#f3f6f3; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:14px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--background); }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { opacity:.6; cursor:default; }
+    :focus-visible { outline:3px solid #7ab28f; outline-offset:3px; }
+    header { background:var(--paper); border-bottom:1px solid var(--line); padding:19px 28px; }
+    .header-content { max-width:1080px; margin:auto; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .brand { display:flex; gap:10px; align-items:center; font-size:19px; font-weight:650; letter-spacing:-.5px; }
+    .brand-mark { width:34px; height:34px; display:grid; place-items:center; background:var(--green); color:white; border-radius:10px; font-size:13px; letter-spacing:0; }
+    .badge { padding:5px 10px; font-size:12px; border-radius:20px; color:var(--muted); background:#edf1ed; }
+    .badge.connected { color:#225d3e; background:#e6f3e9; }
+    .badge.disconnected { color:#99362e; background:#ffefeb; }
+    main { max-width:1136px; margin:auto; padding:32px 28px 48px; }
+    .eyebrow { color:var(--muted); font-size:12px; margin:0 0 8px; }
+    h1 { font-size:30px; line-height:1.2; letter-spacing:-1px; margin:0 0 9px; font-weight:650; }
+    .intro { color:var(--muted); margin:0 0 26px; }
+    .workspace { display:grid; grid-template-columns:300px minmax(0,1fr); gap:22px; align-items:start; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:14px; overflow:hidden; min-width:0; }
+    .panel-header { padding:21px 22px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    h2 { font-size:17px; margin:0; letter-spacing:-.25px; font-weight:650; }
+    .panel-subtitle { color:var(--muted); margin:3px 0 0; font-size:12px; }
+    form { padding:0 22px 23px; }
+    label { display:block; margin-bottom:16px; font-size:13px; font-weight:550; }
+    input { display:block; width:100%; min-height:43px; padding:10px 12px; margin-top:6px; border:1px solid #cdd9d1; border-radius:8px; color:var(--ink); background:var(--paper); font-size:16px; }
+    input::placeholder { color:#7a877f; }
+    select { display:block; width:100%; min-height:43px; padding:10px 12px; margin-top:6px; border:1px solid #cdd9d1; border-radius:8px; color:var(--ink); background:var(--paper); font-size:16px; }
+    .hint { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:5px; }
+    .field-pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .primary { border:0; border-radius:8px; min-height:43px; width:100%; padding:10px 15px; background:var(--green); color:#fff; font-weight:600; }
+    .primary:hover:not(:disabled) { background:#194d34; }
+    .secondary { border:1px solid var(--line); color:var(--ink); background:var(--paper); border-radius:8px; min-height:36px; padding:7px 12px; font-size:12px; }
+    .message { margin:14px 0 0; font-size:13px; }
+    .message.success { color:#226341; }
+    .message.error { color:#a43630; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; text-align:left; }
+    th { color:var(--muted); background:#f6f8f6; font-size:12px; font-weight:500; padding:12px 16px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    td { padding:17px 16px; border-bottom:1px solid #e8ede9; font-size:13px; }
+    th:first-child,td:first-child { padding-left:22px; }
+    th:last-child,td:last-child { padding-right:22px; }
+    tr:last-child td { border-bottom:0; }
+    .number { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .product-name { font-weight:600; overflow-wrap:anywhere; }
+    .sku { font-family:ui-monospace,Consolas,monospace; font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
+    .stock { display:inline-block; padding:3px 8px; border-radius:6px; background:#eaf3ec; color:#295f40; }
+    .stock.zero { background:#fff0e2; color:#8b531b; }
+    .empty { text-align:center; padding:35px 22px; color:var(--muted); }
+    .summary { border-top:1px solid var(--line); padding:13px 22px; color:var(--muted); font-size:12px; }
+    .inventory-error { margin:0; padding:0 22px 16px; color:#a43630; font-size:13px; }
+    dialog { width:min(420px,calc(100% - 36px)); border:1px solid var(--line); border-radius:14px; padding:24px; color:var(--ink); background:var(--paper); }
+    dialog::backdrop { background:rgba(16,33,24,.38); }
+    dialog form { padding:0; margin-top:20px; }
+    .dialog-product { color:var(--muted); margin:7px 0 0; overflow-wrap:anywhere; }
+    .dialog-current { margin:14px 0 0; font-size:13px; }
+    .dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+    .dialog-actions .primary { width:auto; }
+    .action-cell { white-space:nowrap; }
+    .action-cell button + button { margin-left:8px; }
+    .sales-panel { margin-top:22px; }
+    .sales-feedback { margin:0; padding:0 22px 16px; color:#226341; font-size:13px; }
+    .sale-preview { padding:10px 12px; border-radius:8px; background:#edf5ef; color:#285f40; margin-top:12px; }
+    .planning-form { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) auto; gap:14px; align-items:start; }
+    .planning-form label { margin:0; }
+    .planning-form button { margin-top:26px; width:auto; white-space:nowrap; }
+    .planning-stats { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:0 22px 16px; }
+    .planning-stat { padding:14px 16px; border-radius:10px; background:#f3f7f3; }
+    .planning-stat span { display:block; color:var(--muted); font-size:12px; }
+    .planning-stat strong { font-size:23px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .planning-summary { margin:0; padding:0 22px 16px; color:var(--muted); font-size:12px; }
+    .planning-table { min-width:900px; }
+    .planning-table td { vertical-align:top; }
+    .cell-note { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:5px; white-space:normal; }
+    .status { display:inline-block; border-radius:5px; background:#edf1ed; padding:3px 7px; font-size:11px; font-weight:500; margin-top:8px; }
+    .status.out_of_stock,.status.delivery_risk { background:#ffede7; color:#993f2e; }
+    .status.restock { background:#fff1dc; color:#805b23; }
+    .status.enough_stock { background:#e6f3e9; color:#225d3e; }
+    .planning-help { padding:14px 22px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+    .planning-help summary { cursor:pointer; color:var(--ink); }
+    .planning-help p { margin:10px 0 0; }
+    .purchase-form { display:flex; align-items:start; gap:14px; flex-wrap:wrap; }
+    .purchase-form label { margin:0; flex:1 1 220px; max-width:320px; }
+    .purchase-form button { width:auto; margin-top:26px; }
+    .purchase-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .status.included { background:#e6f3e9; color:#225d3e; }
+    .status.partial,.status.budget_short,.status.price_required { background:#fff1dc; color:#805b23; }
+    .supplier-grid { display:grid; grid-template-columns:280px minmax(0,1fr); gap:18px; padding:0 22px 20px; }
+    .supplier-card { padding:18px; border:1px solid var(--line); border-radius:10px; background:#f9fbf9; }
+    .supplier-card form { padding:0; }
+    .supplier-card h3 { margin:0 0 15px; font-size:15px; font-weight:650; }
+    .quote-table { min-width:680px; }
+    .quote-tag { display:inline-block; margin:3px 6px 3px 0; padding:3px 7px; border-radius:5px; background:#edf5ef; color:#285f40; font-size:11px; }
+    .quote-toolbar { padding:0 22px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .quote-toolbar p { margin:0; color:var(--muted); font-size:12px; }
+    .quote-toolbar div { display:flex; gap:8px; flex-wrap:wrap; }
+    .order-dialog { width:min(920px,calc(100% - 36px)); max-height:90vh; overflow:auto; }
+    .order-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:18px; }
+    .order-total { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; margin-top:12px; background:#edf5ef; border-radius:8px; }
+    .order-total strong { font-size:22px; }
+    .order-table { min-width:720px; }
+    .status.approved { background:#e6f3e9; color:#225d3e; }
+    .status.received { background:#e6f3e9; color:#225d3e; }
+    .history-toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:14px; padding:0 22px 18px; }
+    .history-toolbar label { min-width:180px; flex:1; }
+    .history-links { display:flex; flex-wrap:wrap; gap:8px; padding:0 22px 18px; }
+    .history-links a { border:1px solid var(--line); padding:9px 12px; border-radius:8px; color:var(--ink); text-decoration:none; font-size:12px; }
+    .history-quality { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:0 22px 18px; }
+    .history-quality div { background:var(--background); border:1px solid var(--line); border-radius:10px; padding:12px; }
+    .history-quality strong { display:block; font-size:21px; }
+    .history-quality span { color:var(--muted); font-size:12px; }
+    .history-editors { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:0 22px 20px; }
+    .history-card { border:1px solid var(--line); border-radius:10px; padding:16px; }
+    .history-card form { padding:0; }
+    .history-check { display:flex; align-items:center; gap:8px; margin:12px 0; }
+    .history-check input { width:auto; }
+    .history-table-wrap { max-height:350px; overflow:auto; }
+    .history-table-wrap th { position:sticky; top:0; background:var(--paper); }
+    .history-copy { padding:0 22px; }
+    #history-import-panel { padding:0 22px 18px; }
+    .forecast-toolbar { display:grid; grid-template-columns:1.2fr 1fr auto; gap:14px; align-items:end; padding:0 22px 16px; }
+    .forecast-toolbar label { margin:0; min-width:0; }
+    .forecast-toolbar .primary { width:auto; }
+    .forecast-copy { padding:0 22px; margin:0 0 14px; color:var(--muted); font-size:12px; }
+    .forecast-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:0 22px 18px; }
+    .forecast-stat { padding:15px; border:1px solid var(--line); border-radius:10px; background:#f7faf8; }
+    .forecast-stat span { display:block; color:var(--muted); font-size:12px; }
+    .forecast-stat strong { display:block; font-size:25px; font-variant-numeric:tabular-nums; }
+    .forecast-stat small { display:block; color:var(--muted); }
+    .forecast-chart { padding:0 22px 18px; }
+    .forecast-chart svg { display:block; width:100%; height:auto; max-height:250px; background:#fafcfb; border:1px solid var(--line); border-radius:10px; }
+    .forecast-legend { display:flex; flex-wrap:wrap; gap:16px; margin:0 0 10px; font-size:12px; color:var(--muted); }
+    .forecast-legend span::before { content:''; display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:6px; background:#246647; }
+    .forecast-legend .baseline::before { background:#bb873d; }
+    .forecast-legend .chosen::before { background:#5f60bd; }
+    .forecast-quality { margin:0 22px 20px; padding:16px; border:1px solid var(--line); border-radius:10px; }
+    .forecast-quality summary { cursor:pointer; font-weight:550; }
+    .forecast-quality p { color:var(--muted); font-size:12px; }
+    .forecast-quality table { min-width:540px; }
+    .purchase-impact { margin:0 22px 20px; padding:16px; border:1px solid var(--line); border-radius:10px; background:#f7faf8; }
+    .purchase-impact h3 { margin:0 0 8px; font-size:15px; }
+    .impact-controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+    .impact-controls label { margin:0; max-width:180px; }
+    .impact-controls button { width:auto; }
+    .incoming-date { width:180px; font-size:14px; }
+    .incoming-table { min-width:650px; }
+    textarea { display:block; width:100%; min-height:86px; resize:vertical; padding:12px; margin-top:6px; border:1px solid #cdd9d1; border-radius:8px; font:16px/1.5 system-ui,sans-serif; color:var(--ink); background:var(--paper); }
+    .voice-panel { margin-bottom:22px; }
+    .voice-content { padding:0 22px 20px; }
+    .voice-controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-bottom:16px; }
+    .voice-controls label { margin:0; flex:1 1 180px; }
+    .voice-controls button { width:auto; }
+    .voice-result { border:1px solid #cadbd0; border-radius:10px; padding:16px; margin-top:16px; background:#f7faf8; }
+    .voice-result p { margin:0 0 10px; }
+    .voice-examples { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .voice-choices { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .voice-table { min-width:570px; }
+    .voice-panel .status.listening { background:#fff1dc; color:#805b23; }
+    @media(max-width:760px) { .forecast-toolbar { grid-template-columns:1fr 1fr; } .forecast-toolbar button { grid-column:1 / -1; } }
+    @media(max-width:540px) { .forecast-toolbar,.forecast-stats { grid-template-columns:1fr; } .forecast-chart { padding:0 12px 14px; } }
+    @media(max-width:760px) { .history-editors { grid-template-columns:1fr; } .history-quality { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    .status.cancelled { background:#ffede7; color:#993f2e; }
+    .checkout-box { margin-top:18px; padding:18px; border:1px solid #cadbd0; border-radius:10px; background:#f7faf8; }
+    .checkout-box h3 { margin:0; font-size:16px; }
+    .checkout-box p { font-size:13px; line-height:1.6; }
+    .checkout-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .paypal-buttons { max-width:360px; margin-top:16px; min-height:0; }
+    .payment-ids { overflow-wrap:anywhere; color:var(--muted); }
+    @media(max-width:600px) { .order-fields { grid-template-columns:1fr; gap:0; } }
+    @media(max-width:760px) { .supplier-grid { grid-template-columns:1fr; } }
+    @media(max-width:900px) { .planning-form { grid-template-columns:repeat(3,minmax(0,1fr)); } .planning-form button { margin-top:0; grid-column:1 / -1; } }
+    @media(max-width:540px) { .planning-form { grid-template-columns:1fr; } .planning-stats { grid-template-columns:1fr; } .purchase-form label { max-width:none; } .purchase-form button { margin-top:0; } }
+    @media(max-width:420px) { .action-cell button { display:block; width:100%; } .action-cell button + button { margin:7px 0 0; } }
+    footer { margin-top:21px; color:var(--muted); font-size:12px; }
+    [hidden] { display:none !important; }
+    @media(max-width:760px) { .workspace { grid-template-columns:1fr; } main { padding:25px 18px; } header { padding:16px 18px; } h1 { font-size:26px; } }
+    @media(max-width:420px) { .field-pair { grid-template-columns:1fr; gap:0; } th,td { padding:12px 10px; } th:first-child,td:first-child { padding-left:14px; } th:last-child,td:last-child { padding-right:14px; } .panel-header { padding:18px; } }
+    .demo-progress { padding-left:24px; }
+    .demo-progress li { padding:5px 0; }
+    .demo-progress button, #demo-models button { margin-left:10px; }
+  </style>
+  <link rel="stylesheet" href="/assets/app-ui.css">
+  <link rel="stylesheet" href="/assets/easy-shop.css">
+</head>
+<body data-workspace="real" data-api-prefix="" data-start-view="overview">
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
+    <a class="sidebar-brand" href="/" data-view="overview"><span class="brand-mark">RS</span><span>ReSupply <b>AI</b><small>Smart purchasing for your shop</small></span></a>
+    <nav aria-label="Shop pages"><p class="nav-group">DAILY WORK</p><a class="nav-link" data-view="overview" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>My shop · Start here</span></a><a class="nav-link" data-view="inventory" href="/inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10M7 5l10 4"/></svg><span>Products & stock</span></a><a class="nav-link" data-view="orders" href="/orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 10l2 2 4-4M8 16h8"/></svg><span>Orders & incoming</span></a><details class="easy-more-nav"><summary>MORE TOOLS · ALL FEATURES</summary><a class="nav-link" data-view="sales" href="/sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg><span>Sales</span></a><a class="nav-link" data-view="history" href="/sales-history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a9 9 0 1 1-1 8M4 3v5h5M12 7v5l3 2"/></svg><span>Sales history</span></a><a class="nav-link" data-view="suppliers" href="/suppliers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v10H3V7Zm11 4h4l3 4v2h-7M6 7V4h5v3"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Suppliers</span></a><a class="nav-link" data-view="forecast" href="/forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18M6 15l4-5 4 3 6-7M17 6h3v3"/></svg><span>AI forecast</span></a><a class="nav-link" data-view="purchasing" href="/purchasing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h2l2 11h11l2-8H7M10 4h8M14 1v6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg><span>Purchase planner</span><span id="nav-restock-count" class="nav-count" hidden></span></a><a class="nav-link" data-view="assistant" href="/assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Voice assistant</span></a><a class="nav-link" data-view="demo-guide" href="/demo-guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.5 5.5L21 10l-5 4.5.5 6.5-4.5-3-4.5 3 .5-6.5L3 10l6.5-1.5L12 3Z"/></svg><span>Demo guide</span></a></details></nav>
+    <div class="sidebar-note"><span class="sidebar-note-dot"></span><div>Owner stays in control<small>Review quantities. Approve payments.</small></div></div>
+  </aside>
+  <button class="nav-backdrop" id="nav-backdrop" type="button" tabindex="-1" aria-label="Close navigation" hidden></button>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="topbar-left"><button class="menu-toggle secondary" id="menu-toggle" type="button" aria-controls="app-sidebar" aria-expanded="false" aria-label="Open navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="breadcrumb">Workspace <span>/</span> <strong id="page-crumb">Dashboard</strong></span></div>
+      <div class="topbar-right"><span class="badge" id="workspace-name">Your separate shop</span><span class="sandbox-pill">PayPal Sandbox · USD</span><span class="badge" id="connection-status" role="status">Connecting…</span><a class="workspace-switch" id="workspace-link" href="/demo/" target="_blank" rel="noopener">Open Demo Shop ↗</a></div>
+    </header>
+    <main id="main-content" tabindex="-1">
+      <div class="page-heading"><div><p class="eyebrow" id="page-eyebrow">SHOP OVERVIEW</p><h1 id="view-title" tabindex="-1">Your shop, at a glance.</h1><p class="intro" id="view-subtitle">Stock, purchasing and next steps—all in one clear view.</p></div><a class="primary heading-action" data-view="assistant" href="/assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Ask your assistant</span></a></div>
+      <p class="navigation-note" id="navigation-note" role="status" hidden></p>
+
+      <div class="screen" id="screen-overview" data-screen="overview">
+<section class="easy-welcome" aria-labelledby="easy-title">
+  <div><span class="easy-kicker">EASY START · YOUR SEPARATE SHOP</span><h2 id="easy-title">Update stock. We prepare the rest.</h2><p>Ek baar setup karo. Phir sirf batao kitna bika — low stock par order ready milega.</p></div>
+  <span class="easy-mode" id="easy-mode">Checking your shop…</span>
+</section>
+<ol class="easy-steps" aria-label="Your daily workflow"><li><b>01</b><span>Set up once<small>Products, supplier & limit</small></span></li><li><b>02</b><span>Update stock<small>Sold units or remaining count</small></span></li><li><b>03</b><span>App prepares order<small>Demand, timing & budget</small></span></li><li><b>04</b><span>You pay<small>Confirm in PayPal Sandbox</small></span></li></ol>
+<div class="easy-notice" id="easy-notice" role="status">Loading your saved shop…</div>
+<section class="panel easy-ml-proof" id="easy-ml-proof" hidden aria-labelledby="easy-ml-proof-title">
+  <div><span class="easy-kicker">REAL ML · SYNTHETIC SALES DATA</span><h3 id="easy-ml-proof-title">Your demand models are working.</h3><p id="easy-ml-proof-copy"></p></div>
+  <div class="easy-ml-metrics"><div><strong id="easy-ml-days">—</strong><small>completed days / product</small></div><div><strong id="easy-ml-models">—</strong><small>current trained reports</small></div><div><strong id="easy-ml-selected">—</strong><small>products using Random Forest</small></div></div>
+  <button class="secondary" type="button" id="easy-ml-open">Show working ML forecast →</button>
+</section>
+<div class="easy-error" id="easy-error" role="alert" hidden></div>
+<div class="easy-work-grid">
+  <section class="panel easy-card" aria-labelledby="easy-stock-title"><div class="easy-card-head"><span class="easy-icon">↘</span><div><h3 id="easy-stock-title">What sold today?</h3><p>Stock save hote hi restocking check ho jayegi.</p></div></div>
+    <form id="easy-stock-form" class="easy-form">
+      <label for="easy-sale-product">Product<select id="easy-sale-product" required><option value="">Add a product below first</option></select></label>
+      <div class="field-pair"><label for="easy-stock-mode">What are you entering?<select id="easy-stock-mode"><option value="sold">Units sold</option><option value="remaining">Stock remaining after sales</option></select></label><label for="easy-stock-quantity"><span id="easy-quantity-label">How many units sold?</span><input id="easy-stock-quantity" type="number" min="1" max="1000000" step="1" required placeholder="e.g. 5"></label></div>
+      <p class="hint" id="easy-stock-hint">Choose a product to see the current stock.</p>
+      <button class="primary" id="easy-stock-save" type="submit">Save stock & prepare next step</button>
+    </form>
+    <div class="easy-stock-list" id="easy-stock-list" aria-label="Current stock"></div>
+    <a class="easy-inline-link" data-view="inventory" href="/inventory">All products & stock corrections →</a>
+  </section>
+  <section class="panel easy-card easy-order-card" aria-labelledby="easy-order-title"><div class="easy-card-head"><span class="easy-icon">✓</span><div><h3 id="easy-order-title">Your next purchase</h3><p>Automatically prepared within your saved limit.</p></div></div>
+    <div id="easy-order-content" class="easy-order-content"><p class="easy-empty">Set up your products and turn on automatic restocking below.</p></div>
+    <button class="primary easy-pay" id="easy-pay" type="button" hidden>Pay with PayPal</button>
+    <button class="primary easy-pay" id="easy-receive" type="button" hidden>Goods arrived — receive stock</button>
+    <button class="secondary" id="easy-open-order" type="button" hidden>View order / payment details</button>
+    <p class="hint">PayPal Sandbox · USD test money. Stock is added when you confirm goods arrived.</p>
+    <button class="easy-inline-button" id="easy-refresh" type="button">Refresh suggestions</button>
+  </section>
+</div>
+<details id="easy-setup" class="easy-disclosure" open><summary><span>One-time shop setup</span><small>Add products and choose your auto-restock limit</small></summary>
+  <div class="easy-setup-grid">
+    <section class="easy-setup-card"><span class="easy-kicker">STEP 1 · PRODUCTS</span><h3>Add product + supplier together</h3>
+      <form id="easy-product-form" class="easy-form">
+        <label for="easy-name">Product name<input id="easy-name" maxlength="120" required placeholder="e.g. Blue Pen"></label>
+        <div class="field-pair"><label for="easy-stock">Current stock<input id="easy-stock" type="number" min="0" max="1000000" step="1" required placeholder="20"></label><label for="easy-cost">Purchase cost / unit (USD)<input id="easy-cost" type="number" min="0.01" max="9999999999.99" step="0.01" required placeholder="0.60"></label></div>
+        <label for="easy-supplier">Your usual supplier<input id="easy-supplier" list="easy-suppliers" maxlength="120" required placeholder="e.g. Metro Wholesale"><datalist id="easy-suppliers"></datalist><small>We save the supplier, price quote and selection together.</small></label>
+        <div class="field-pair"><label for="easy-daily">Usually sold per day<input id="easy-daily" type="number" min="0" max="1000000" step="1" required placeholder="e.g. 5"><small>Your starting estimate. Confirmed sales replace it later.</small></label><label for="easy-lead">Supplier delivery (days)<input id="easy-lead" type="number" min="1" max="30" step="1" required value="3"></label></div>
+        <details class="easy-small-details"><summary>Custom product code (optional)</summary><label for="easy-sku">SKU<input id="easy-sku" maxlength="60" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" placeholder="Leave blank — generated automatically"></label></details>
+        <button class="primary" id="easy-add-product" type="submit">Save product & supplier</button>
+        <p id="easy-product-feedback" class="hint" role="status"></p>
+      </form>
+    </section>
+    <section class="easy-setup-card"><span class="easy-kicker">STEP 2 · AUTOMATION</span><h3>Set your limits once</h3>
+      <form id="easy-policy-form" class="easy-form">
+        <label for="easy-limit">Maximum total per order (USD)<input id="easy-limit" type="number" min="0.01" max="1000000" step="0.01" required value="100.00"><small>Includes products, shipping and tax. Payment still needs you.</small></label>
+        <div class="field-pair"><label for="easy-shipping">Shipping per order (USD)<input id="easy-shipping" type="number" min="0" max="1000000" step="0.01" required value="0.00"></label><label for="easy-tax">Tax per order (USD)<input id="easy-tax" type="number" min="0" max="1000000" step="0.01" required value="0.00"></label></div>
+        <details class="easy-small-details"><summary>Coverage & safety stock</summary><div class="field-pair"><label for="easy-coverage">Days of stock<input id="easy-coverage" type="number" min="1" max="30" step="1" required value="7"></label><label for="easy-buffer">Extra safety days<input id="easy-buffer" type="number" min="0" max="14" step="1" required value="2"></label></div></details>
+        <label class="easy-check"><input id="easy-auto-history" type="checkbox"><span>I record all sales here. Save completed daily totals automatically from my entries.</span></label>
+        <label class="easy-check"><input id="easy-zero-days" type="checkbox"><span>While tracking is on, a day with no entries means zero sales. <small>Leave off if entries may be missing.</small></span></label>
+        <label class="easy-check easy-consent"><input id="easy-enabled" type="checkbox" required><span>Enable automatic demand checks, eligible ML training and forecast use, and unpaid draft preparation within these limits.</span></label>
+        <button class="primary" id="easy-policy-save" type="submit">Save & turn on auto restock</button>
+        <button class="secondary" id="easy-pause" type="button" hidden>Pause auto restock</button>
+        <p class="hint">Shipping/tax are your confirmed fixed charges. Update them when they change. Historical records are created only from tracking start onward.</p>
+      </form>
+    </section>
+  </div>
+</details>
+<details class="easy-disclosure" id="easy-ai-details"><summary><span>How did AI decide?</span><small>See demand data, model readiness and the selected forecast</small></summary><div class="easy-explanation"><p>Your daily estimate starts planning immediately. Confirmed sales replace it. With 56 recent consecutive eligible days, the app trains and tests Random Forest automatically. It uses ML only if tested error is at least 5% lower than the 7-day average.</p><p>Low stock means the available quantity is at or below estimated demand during supplier delivery plus safety days. Coverage sets the refill size. Budget allocation uses urgency rules.</p><div id="easy-ai-list"></div><a data-view="forecast" href="/forecast" class="easy-inline-link">Detailed forecasts, charts & manual review →</a></div></details>
+<details class="easy-disclosure" id="easy-llm-panel"><summary><span>Optional: describe an entry in your own words</span><small>AI fills the form; you check and save it</small></summary><form class="easy-form" id="easy-llm-form"><p id="easy-llm-status" class="hint">Checking optional AI typing…</p><label for="easy-llm-text">Describe one product or sale<textarea id="easy-llm-text" maxlength="1000" rows="3" placeholder="Add Blue Pen, stock 20, USD 0.60 each, supplier Metro, delivery 2 days, usually 5 sold per day." required></textarea></label><label class="easy-check"><input id="easy-llm-consent" type="checkbox" required><span>Send this sentence to OpenAI to draft the form fields.</span></label><button class="secondary" id="easy-llm-fill" type="submit" disabled>Fill form with AI</button><p id="easy-llm-feedback" role="status" class="hint"></p></form></details>
+
+<details class="easy-disclosure easy-insights"><summary>More shop insights · dashboard</summary><div>
+        <div class="overview-metrics">
+          <div class="metric-card"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10M7 5l10 4"/></svg></span><span class="metric-label">Products in inventory</span><strong id="dash-products">—</strong><p id="dash-products-note">Loading your catalog…</p></div>
+          <div class="metric-card"><span class="metric-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18M6 15l4-5 4 3 6-7M17 6h3v3"/></svg></span><span class="metric-label">Products to restock</span><strong id="dash-restock">—</strong><p id="dash-restock-note">Checking demand and stock…</p></div>
+          <div class="metric-card"><span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h2l2 11h11l2-8H7M10 4h8M14 1v6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span><span class="metric-label">Current purchase plan</span><strong id="dash-plan">—</strong><p id="dash-plan-note">Product costs only · loading…</p></div>
+          <div class="metric-card"><span class="metric-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 10l2 2 4-4M8 16h8"/></svg></span><span class="metric-label">Orders awaiting stock</span><strong id="dash-incoming">—</strong><p id="dash-incoming-note">From latest 50 saved orders</p></div>
+        </div>
+        <div class="overview-main">
+          <section class="panel attention-panel" aria-labelledby="attention-title"><div class="panel-header"><div><h2 id="attention-title">Products to review</h2><p class="panel-subtitle">Demand and delivery estimates guide the next purchase.</p></div><a class="text-link" data-view="purchasing" href="/purchasing">Open planner ↗</a></div><div id="dash-attention" class="attention-list"><p class="quiet-state">Loading suggestions…</p></div><div class="summary" id="dash-demand-note">Purchasing recommendations require your review.</div></section>
+          <section class="next-step-card" aria-labelledby="next-step-title"><span class="mini-label">YOUR NEXT STEP</span><h2 id="next-step-title">Get your shop ready</h2><p id="next-step-copy">A small step now makes purchasing easier.</p><a id="next-step-link" class="primary" data-view="inventory" href="/inventory">Open inventory <span aria-hidden="true">→</span></a><div class="next-step-foot"><span>01</span><p>Forecast<br><small>Know what may sell</small></p><span>02</span><p>Review<br><small>Control every purchase</small></p></div></section>
+        </div>
+        <div class="overview-bottom">
+          <section class="panel" aria-labelledby="dash-orders-title"><div class="panel-header"><div><h2 id="dash-orders-title">Recent orders</h2><p class="panel-subtitle">Approval, payment and receiving are separate steps.</p></div><a class="text-link" data-view="orders" href="/orders">View orders ↗</a></div><div id="dash-orders" class="dashboard-orders"><p class="quiet-state">Loading saved orders…</p></div></section>
+          <section class="assistant-shortcut" aria-labelledby="assistant-shortcut-title"><span class="assistant-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span><h2 id="assistant-shortcut-title">Shop ki baat, simple words mein.</h2><p>“Blue pen ka stock kitna hai?”<br>“50 dollar budget ka plan banao.”</p><a class="text-link" data-view="assistant" href="/assistant">Open voice & text assistant →</a><small>Read-only previews. Review/edit speech before sending.</small></section>
+        </div>
+        <p class="dashboard-footnote" id="dash-data-note">USD product estimates · PayPal Sandbox test payments · inventory changes on receiving.</p>
+</div></details>
+      </div>
+<div class="screen" id="screen-inventory" data-screen="inventory" hidden>
+    <div class="workspace">
+      <section class="panel" aria-labelledby="add-title">
+        <div class="panel-header"><div><h2 id="add-title">Add a product</h2><p class="panel-subtitle">Start with the essentials.</p></div></div>
+        <form id="product-form">
+          <label for="sku">Product code (SKU)
+            <input id="sku" name="sku" type="text" placeholder="PEN-BLUE" maxlength="60" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" required>
+            <span class="hint">A unique code: letters, numbers, dots, dashes or underscores.</span>
+          </label>
+          <label for="name">Product name<input id="name" name="name" type="text" placeholder="Blue Ballpoint Pen" maxlength="120" required></label>
+          <div class="field-pair">
+            <label for="stock">Stock on hand<input id="stock" name="stock" type="number" min="0" max="1000000" step="1" placeholder="25" required></label>
+            <label for="unit-cost">Unit cost (USD)<input id="unit-cost" name="unit_cost" type="number" min="0" max="9999999999.99" step="0.01" placeholder="0.90" required></label>
+          </div>
+          <button class="primary" id="add-button" type="submit">Add product</button>
+          <p class="message success" id="success-message" role="status" hidden></p>
+          <p class="message error" id="form-error" role="alert" hidden></p>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="inventory-title">
+        <div class="panel-header">
+          <div><h2 id="inventory-title">Saved inventory</h2><p class="panel-subtitle" id="product-count">Loading products…</p></div>
+          <button class="secondary" id="refresh-button" type="button">Refresh</button>
+        </div>
+        <p class="inventory-error" id="inventory-error" role="alert" hidden></p>
+        <div class="table-wrap">
+          <table aria-label="Saved product inventory">
+            <thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col" class="number">Stock</th><th scope="col" class="number">Unit cost</th><th scope="col">Action</th></tr></thead>
+            <tbody id="product-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty-state" hidden>No products yet. Add your first product using the form.</div>
+        <div class="summary" id="inventory-summary">Loading inventory…</div>
+      </section>
+    </div>
+
+</div>
+<div class="screen" id="screen-sales" data-screen="sales" hidden>
+<p class="page-tip">Record a sale beside a product in <a data-view="inventory" href="/inventory">Inventory</a>. Use <a data-view="history" href="/sales-history">Sales history</a> for completed daily totals and CSV imports.</p>    <section class="panel sales-panel" aria-labelledby="sales-title">
+      <div class="panel-header">
+        <div><h2 id="sales-title">Recent sales</h2><p class="panel-subtitle" id="sales-count">Loading sales…</p></div>
+        <button class="secondary" id="refresh-sales" type="button">Refresh sales</button>
+      </div>
+      <p class="sales-feedback" id="sales-feedback" role="status" hidden></p>
+      <p class="inventory-error" id="sales-error" role="alert" hidden></p>
+      <div class="table-wrap">
+        <table aria-label="Recent recorded sales">
+          <thead><tr><th scope="col">Recorded (IST)</th><th scope="col">Product</th><th scope="col" class="number">Quantity sold</th><th scope="col" class="number">Stock after sale</th></tr></thead>
+          <tbody id="sales-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="sales-empty" hidden>No sales recorded yet. Use Record sale beside a product.</div>
+      <div class="summary">Latest 100 sale records. Manual stock corrections are separate from sales.</div>
+    </section>
+
+</div>
+<div class="screen" id="screen-history" data-screen="history" hidden>
+    <section class="panel sales-panel" aria-labelledby="history-title">
+      <div class="panel-header">
+        <div><h2 id="history-title">Daily sales history</h2><p class="panel-subtitle">Prepare complete daily records before demand forecasting.</p></div>
+        <button class="secondary" id="history-refresh" type="button">Refresh history</button>
+      </div>
+      <div class="history-toolbar">
+        <label for="history-product">Product<select id="history-product" disabled><option value="">Add a product first</option></select></label>
+        <label for="history-range">History window<select id="history-range"><option value="30">Last 30 days</option><option value="90" selected>Last 90 days</option><option value="180">Last 180 days</option><option value="365">Last 365 days</option></select></label>
+      </div>
+      <div class="history-quality" aria-label="Daily history coverage">
+        <div><strong id="history-actual">—</strong><span>Actual full days</span></div>
+        <div><strong id="history-demo-days">—</strong><span>Demo days</span></div>
+        <div><strong id="history-missing">—</strong><span>Missing days</span></div>
+        <div><strong id="history-zero">—</strong><span>Zero-sales days · no stockout</span></div>
+        <div><strong id="history-stockouts">—</strong><span>Stockout days</span></div>
+        <div><strong id="history-unconfirmed">—</strong><span>Logged-only days</span></div>
+      </div>
+      <p class="history-copy hint" id="history-description">Loading daily history…</p>
+      <p class="history-copy hint" id="history-quality-message">A missing date is unknown. Enter zero only for a confirmed day with no sales.</p>
+      <div class="history-editors">
+        <div class="history-card">
+          <h3>Save a full-day total</h3>
+          <form id="history-day-form">
+            <div class="field-pair">
+              <label for="history-date">Past date<input id="history-date" type="date" min="1900-01-01" required></label>
+              <label for="history-units">Units sold · full day<input id="history-units" type="number" min="0" max="1000000" step="1" placeholder="0 if confirmed no sales" required></label>
+            </div>
+            <label for="history-source">Data source<select id="history-source"><option value="actual">Actual shop records</option><option value="demo">Demo / synthetic</option></select></label>
+            <label class="history-check" for="history-stockout"><input id="history-stockout" type="checkbox">Stock ran out on this day</label>
+            <p class="hint" id="history-day-hint">Choose a past date. Today's sales are still partial.</p>
+            <div class="checkout-actions"><button class="primary" id="history-save" type="submit" disabled>Save full-day total</button><button class="secondary" id="history-reload-day" type="button">Reload day</button></div>
+          </form>
+        </div>
+        <div class="history-card">
+          <h3>Import daily totals from CSV</h3>
+          <p class="hint">Columns: date, sku, units_sold. Optional: source (actual/demo), stockout (0/1). Existing different totals require a reviewed daily correction.</p>
+          <label for="history-file">Choose UTF-8 CSV<input id="history-file" type="file" accept=".csv,text/csv"></label>
+          <button class="secondary" id="history-preview" type="button" disabled>Preview CSV</button>
+          <p class="hint">Imports record past full-day totals. Current stock is unchanged. Preview shows invalid and already-saved rows before you confirm.</p>
+        </div>
+      </div>
+      <div class="history-links">
+        <a id="history-template" href="#" download hidden>Download CSV template</a>
+        <a id="history-demo" href="#" download hidden>Download 60-day demo CSV</a>
+        <a id="history-export" href="#" download hidden>Export saved daily totals</a>
+      </div>
+      <p class="history-copy hint">The demo CSV is synthetic and clearly labelled. It does not affect the actual completed-day purchasing baseline.</p>
+      <p class="history-copy message success" id="history-feedback" role="status" hidden></p>
+      <p class="history-copy message error" id="history-error" role="alert" hidden></p>
+      <div id="history-import-panel" hidden>
+        <p class="hint" id="history-import-summary"></p>
+        <div class="table-wrap history-table-wrap"><table aria-label="CSV preview"><thead><tr><th scope="col">Line</th><th scope="col">Date</th><th scope="col">SKU</th><th scope="col">Units</th><th scope="col">Source</th><th scope="col">Check</th></tr></thead><tbody id="history-preview-rows"></tbody></table></div>
+        <button class="primary" id="history-commit" type="button" hidden>Confirm import</button>
+      </div>
+      <div class="table-wrap history-table-wrap"><table aria-label="Daily sales totals and missing dates"><thead><tr><th scope="col">Date (IST)</th><th scope="col">Units sold</th><th scope="col">Data status</th><th scope="col">Stockout</th></tr></thead><tbody id="history-rows"></tbody></table></div>
+    </section>
+
+</div>
+<div class="screen" id="screen-forecast" data-screen="forecast" hidden>
+<p class="page-tip">Training data is managed on <a data-view="history" href="/sales-history">Sales history</a>. Preview uses the current settings in <a data-view="purchasing" href="/purchasing">Purchase planner</a>.</p>    <section class="panel sales-panel" aria-labelledby="forecast-title">
+      <div class="panel-header">
+        <div><h2 id="forecast-title">ML demand forecast</h2><p class="panel-subtitle">Shop ki past sales se kal se agle 7 din ka estimate.</p></div>
+        <button class="secondary" id="forecast-refresh" type="button">Refresh status</button>
+      </div>
+      <form class="forecast-toolbar" id="forecast-form">
+        <label for="forecast-product">Product<select id="forecast-product" disabled><option value="">Add a product first</option></select></label>
+        <label for="forecast-source">Train from<select id="forecast-source"><option value="actual">Actual shop records</option><option value="demo">Demo / synthetic</option></select></label>
+        <button class="primary" id="forecast-train" type="submit" disabled>Train &amp; forecast</button>
+      </form>
+      <p class="forecast-copy" id="forecast-readiness" role="status">Checking daily sales data…</p>
+      <p class="forecast-copy" id="forecast-coverage"></p>
+      <p class="forecast-copy" id="forecast-notice">Actual aur demo data alag hain. Forecast dekhne se order ya payment create nahi hota.</p>
+      <p class="history-copy message error" id="forecast-error" role="alert" hidden></p>
+      <div id="forecast-results" hidden>
+        <div class="forecast-stats">
+          <div class="forecast-stat"><span>Next 7 days · selected estimate</span><strong id="forecast-total">—</strong><small id="forecast-period"></small></div>
+          <div class="forecast-stat"><span>ML test error · units per day</span><strong id="forecast-model-error">—</strong><small id="forecast-test-days"></small></div>
+          <div class="forecast-stat"><span>Average method test error</span><strong id="forecast-baseline-error">—</strong><small>Lower error is better · MAE</small></div>
+        </div>
+        <p class="forecast-copy" id="forecast-choice"></p>
+        <p class="forecast-copy" id="forecast-stock-gap"></p>
+        <div class="forecast-chart">
+          <p class="forecast-legend"><span>ML estimate</span><span class="baseline">7-day average</span><span class="chosen">Selected forecast</span></p>
+          <svg id="forecast-chart" viewBox="0 0 720 235" role="img" aria-label="Next seven days of predicted sales; exact values are in the following table"></svg>
+        </div>
+        <div class="table-wrap"><table aria-label="Next seven full-day demand estimates"><thead><tr><th scope="col">Date (IST)</th><th scope="col" class="number">ML units</th><th scope="col" class="number">Average units</th><th scope="col" class="number">Selected units</th></tr></thead><tbody id="forecast-rows"></tbody></table></div>
+        <details class="forecast-quality">
+          <summary>Check model quality · earlier days → later days</summary>
+          <p id="forecast-validation"></p>
+          <div class="table-wrap"><table aria-label="Historical forecast comparison on unseen later dates"><thead><tr><th scope="col">Test date</th><th scope="col" class="number">Observed units</th><th scope="col" class="number">ML forecast</th><th scope="col" class="number">Average forecast</th></tr></thead><tbody id="forecast-test-rows"></tbody></table></div>
+          <p id="forecast-limitations"></p>
+        </details>
+      </div>
+      <div class="purchase-impact">
+        <h3>Review forecast for purchasing</h3>
+        <p class="hint" id="impact-status">Train a current forecast, then preview its purchase impact.</p>
+        <div class="impact-controls">
+          <label id="impact-demo-stock-label" for="impact-demo-stock" hidden>Example stock for demo<input id="impact-demo-stock" type="number" min="0" max="1000000" step="1" value="20"></label>
+          <button id="impact-preview" class="secondary" type="button" disabled>Preview purchase impact</button>
+          <button id="impact-average" class="secondary" type="button" disabled>Use sales average</button>
+        </div>
+        <p class="hint" id="impact-copy">Preview reads delivery, coverage, buffer and budget from the planner controls below. Actual mode uses your selected supplier quote; demo uses example stock and $1.00/unit.</p>
+        <div id="impact-result" hidden>
+          <p id="impact-summary"></p>
+          <p class="hint" id="impact-detail"></p>
+          <p class="hint" id="impact-review-copy">Review the forecast and its limits. Using an actual forecast changes this product's restock estimate and future drafts. Longer than 7-day projections are not separately tested. Review orders before approval and payment.</p>
+          <button id="impact-use" class="primary" type="button" disabled>Use this actual forecast</button>
+          <div class="table-wrap history-table-wrap"><table aria-label="Forecast purchase projection"><thead><tr><th scope="col">Date</th><th scope="col" class="number">Expected demand</th><th scope="col" class="number">Incoming at day end</th><th scope="col" class="number">Balance before arrival</th></tr></thead><tbody id="impact-rows"></tbody></table></div>
+        </div>
+        <button id="purchasing-retry" class="secondary" type="button" hidden>Retry same change</button>
+        <p id="purchasing-error" class="message error" role="alert" hidden></p>
+        <p id="purchasing-feedback" class="message success" role="status" hidden></p>
+      </div>
+      <div class="planning-help" id="forecast-help">Needs 56 consecutive confirmed days from one source, without stockout flags. Latest usable date must be within 7 days. Purchasing uses the sales-average fallback until a current actual forecast is reviewed.</div>
+    </section>
+
+</div>
+<div class="screen" id="screen-suppliers" data-screen="suppliers" hidden>
+    <section class="panel sales-panel" aria-labelledby="supplier-title">
+      <div class="panel-header">
+        <div><h2 id="supplier-title">Suppliers &amp; quotes</h2><p class="panel-subtitle">Enter supplier quotes, compare price and delivery, then choose a source.</p></div>
+        <span class="badge" id="supplier-count">Loading suppliers…</span>
+      </div>
+      <div class="supplier-grid">
+        <div class="supplier-card">
+          <h3>Add a supplier</h3>
+          <form id="supplier-form">
+            <label for="supplier-name">Supplier name<input id="supplier-name" type="text" maxlength="120" placeholder="Supplier A" required></label>
+            <label for="supplier-contact">Contact note (optional)<input id="supplier-contact" type="text" maxlength="120" placeholder="Phone, email or your reference"></label>
+            <button class="primary" id="add-supplier" type="submit">Add supplier</button>
+            <p class="message success" id="supplier-success" role="status" hidden></p>
+            <p class="message error" id="supplier-error" role="alert" hidden></p>
+          </form>
+        </div>
+        <div class="supplier-card">
+          <h3>Save or update a quote</h3>
+          <form id="quote-form">
+            <label for="quote-product">Product<select id="quote-product" required disabled><option value="">Add a product first</option></select></label>
+            <label for="quote-supplier">Supplier<select id="quote-supplier" required disabled><option value="">Add a supplier first</option></select></label>
+            <div class="field-pair">
+              <label for="quote-price">Unit price (USD)<input id="quote-price" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.80" required disabled></label>
+              <label for="quote-delivery">Delivery time (days)<input id="quote-delivery" type="number" min="1" max="30" step="1" value="3" required disabled></label>
+            </div>
+            <button class="primary" id="save-quote" type="submit" disabled>Save quote</button>
+            <span class="hint">Choose an existing supplier/product pair to update its quote.</span>
+            <p class="message error" id="quote-form-error" role="alert" hidden></p>
+          </form>
+        </div>
+      </div>
+      <div class="quote-toolbar">
+        <p id="quote-count">Choose a product to compare quotes.</p>
+        <div>
+          <button class="secondary" id="refresh-quotes" type="button">Refresh quotes</button>
+          <button class="secondary" id="clear-supplier-selection" type="button" disabled>Use saved product price</button>
+        </div>
+      </div>
+      <p class="sales-feedback" id="quote-feedback" role="status" hidden></p>
+      <p class="inventory-error" id="quotes-error" role="alert" hidden></p>
+      <div class="table-wrap">
+        <table class="quote-table" aria-label="Supplier unit prices and delivery times for the selected product">
+          <thead><tr><th scope="col">Supplier</th><th scope="col" class="number">Unit price (USD)</th><th scope="col" class="number">Delivery</th><th scope="col">Comparison</th><th scope="col">Choice</th></tr></thead>
+          <tbody id="quote-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="quotes-empty" hidden>No quotes for this product. Save a quote using the form above.</div>
+      <div class="summary">Unit prices only; excludes shipping and tax. A saved supplier selection applies to planning for that product.</div>
+    </section>
+
+</div>
+<div class="screen" id="screen-purchasing" data-screen="purchasing" hidden>
+    <section class="panel sales-panel" aria-labelledby="restock-title">
+      <div class="panel-header">
+        <div><h2 id="restock-title">Restock suggestions</h2><p class="panel-subtitle">A starting estimate from your recorded sales.</p></div>
+        <span class="badge">Reviewed forecast / average</span>
+      </div>
+      <form class="planning-form" id="restock-form">
+        <label for="lead-time">Default delivery time (days)
+          <input id="lead-time" type="number" min="1" max="30" step="1" value="3" required>
+          <span class="hint">Used until a supplier quote is selected.</span>
+        </label>
+        <label for="coverage-days">Stock coverage (days)
+          <input id="coverage-days" type="number" min="1" max="30" step="1" value="7" required>
+          <span class="hint">Stock to keep after delivery.</span>
+        </label>
+        <label for="buffer-days">Extra buffer (days)
+          <input id="buffer-days" type="number" min="0" max="14" step="1" value="2" required>
+          <span class="hint">Extra cover if demand changes.</span>
+        </label>
+        <button class="primary" id="calculate-restock" type="submit">Update suggestions</button>
+      </form>
+      <div class="planning-stats">
+        <div class="planning-stat"><span>Products to consider</span><strong id="restock-count">…</strong></div>
+        <div class="planning-stat"><span>Estimated product cost (USD)</span><strong id="restock-cost">…</strong><span>Known suggestions only; excludes shipping and tax.</span></div>
+      </div>
+      <p class="planning-summary" id="restock-summary" role="status">Loading suggestions…</p>
+      <p class="inventory-error" id="restock-error" role="alert" hidden></p>
+      <div class="table-wrap">
+        <table class="planning-table" aria-label="Sales-based restock suggestions">
+          <thead><tr><th scope="col">Product</th><th scope="col" class="number">Recorded sales / day</th><th scope="col" class="number">Stock left</th><th scope="col" class="number">Suggested buy</th><th scope="col" class="number">Est. cost (USD)</th><th scope="col">Why?</th></tr></thead>
+          <tbody id="restock-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="restock-empty" hidden>Add a product to start planning.</div>
+      <details class="planning-help">
+        <summary>How is this calculated?</summary>
+        <p>Daily average = recorded units sold ÷ calendar days in the window. We use up to 7 completed days, starting from the first recorded sale. Days without records count as zero; missing sales will change this estimate.</p>
+        <p>If your first sale is today, we show a partial-day preview labelled “Today's estimate”. Once earlier sales exist, today's unfinished day is excluded from the average.</p>
+        <p>Average mode uses its sales-rate target. A reviewed actual forecast uses today's remaining demand plus future delivery, coverage and buffer days. Dated incoming goods reduce later shortages; late arrival does not erase an earlier shortage. Suggested buy rounds the largest projected stock gap up to whole units. Supplier delay can still cause an earlier stockout.</p>
+        <p>Selected supplier quotes supply each product's unit price and delivery time. Otherwise, we use the saved product price and default delivery time. Coverage and buffer apply to every product.</p>
+        <p>Review these quantities before buying. Planning form settings reset when the page reloads; supplier selections stay saved.</p>
+      </details>
+    </section>
+    <section class="panel sales-panel" aria-labelledby="purchase-title">
+      <div class="panel-header">
+        <div><h2 id="purchase-title">Purchase plan</h2><p class="panel-subtitle">Allocate a product-cost budget to your restock suggestions.</p></div>
+        <span class="badge">Urgent items first</span>
+      </div>
+      <form class="purchase-form" id="purchase-form">
+        <label for="purchase-budget">Purchase budget (USD)
+          <input id="purchase-budget" type="number" min="0" max="1000000" step="0.01" value="200.00" required>
+          <span class="hint">Product costs only; excludes shipping and tax.</span>
+        </label>
+        <button class="primary" id="build-plan" type="submit">Build plan</button>
+        <button class="secondary" id="create-order" type="button" disabled>Save draft &amp; review</button>
+      </form>
+      <div class="planning-stats purchase-stats">
+        <div class="planning-stat"><span>Planned product cost</span><strong id="purchase-used">…</strong></div>
+        <div class="planning-stat"><span>Budget remaining</span><strong id="purchase-remaining">…</strong></div>
+        <div class="planning-stat"><span>Units in plan</span><strong id="purchase-units">…</strong></div>
+      </div>
+      <p class="planning-summary" id="purchase-summary" role="status">Loading purchase plan…</p>
+      <p class="planning-summary" id="draft-help" role="status">Build a plan and choose suppliers for planned items to save a draft.</p>
+      <p class="inventory-error" id="purchase-error" role="alert" hidden></p>
+      <div class="table-wrap">
+        <table class="planning-table" aria-label="Purchase quantities within the product-cost budget">
+          <thead><tr><th scope="col">Product</th><th scope="col" class="number">Suggested</th><th scope="col" class="number">In plan</th><th scope="col" class="number">Deferred</th><th scope="col" class="number">Est. line cost (USD)</th><th scope="col">Allocation</th></tr></thead>
+          <tbody id="purchase-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="purchase-empty" hidden>Add a product and record sales to start a purchase plan.</div>
+      <details class="planning-help">
+        <summary>How is the budget allocated?</summary>
+        <p>Out-of-stock products are considered first, followed by delivery-risk products, then other restock suggestions. Products with equal urgency follow inventory order.</p>
+        <p>Each product gets as many of its suggested units as the remaining budget covers. Any leftover budget can cover later, cheaper items. This simple priority rule may leave some products partially covered or deferred.</p>
+        <p>The plan uses selected supplier prices and delivery times when available, plus coverage and buffer settings above. Items without sales history need data; zero saved unit costs need a positive supplier quote before allocation.</p>
+        <p>Products without a supplier selection can still be estimated using their saved price. Choose suppliers before order review, and confirm shipping and tax. Building a plan leaves inventory unchanged.</p>
+      </details>
+    </section>
+
+</div>
+<div class="screen" id="screen-orders" data-screen="orders" hidden>
+    <section class="panel sales-panel" aria-labelledby="orders-title">
+      <div class="panel-header">
+        <div><h2 id="orders-title">Saved orders</h2><p class="panel-subtitle" id="orders-count">Loading orders…</p></div>
+        <button class="secondary" id="refresh-orders" type="button">Refresh orders</button>
+      </div>
+      <p class="sales-feedback" id="orders-feedback" role="status" hidden></p>
+      <p class="inventory-error" id="orders-error" role="alert" hidden></p>
+      <div class="table-wrap">
+        <table class="order-table" aria-label="Saved purchase order drafts and approval status">
+          <thead><tr><th scope="col">Order</th><th scope="col" class="number">Items / units</th><th scope="col" class="number">Suppliers</th><th scope="col" class="number">Total (USD)</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+          <tbody id="order-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="orders-empty" hidden>No orders yet. Save a purchase plan as a draft to review it.</div>
+      <div class="summary">Latest 50 orders. Review a draft before approving. Inventory increases after goods are received.</div>
+    </section>
+    <section class="panel sales-panel" aria-labelledby="incoming-title">
+      <div class="panel-header"><div><h2 id="incoming-title">Incoming stock</h2><p class="panel-subtitle">Paid order ka maal kab aayega? Supplier ki expected date save karo.</p></div><button id="incoming-refresh" class="secondary" type="button">Refresh incoming orders</button></div>
+      <p class="forecast-copy" id="incoming-status">Loading paid orders awaiting stock…</p>
+      <div class="table-wrap"><table class="incoming-table" aria-label="Captured orders awaiting stock"><thead><tr><th scope="col">Order</th><th scope="col">Products / units</th><th scope="col">Expected arrival (IST)</th><th scope="col">Actions</th></tr></thead><tbody id="incoming-rows"></tbody></table></div>
+      <div class="planning-help">Only fully captured orders awaiting receipt appear. Dates are your estimates; arrivals are counted at day end. Undated, overdue and beyond-window goods are excluded. Goods milne par Saved orders mein Receive Stock use karo.</div>
+    </section>
+
+</div>
+<div class="screen" id="screen-assistant" data-screen="assistant" hidden>
+    <section class="panel voice-panel" aria-labelledby="voice-title">
+      <div class="panel-header"><div><h2 id="voice-title">Voice &amp; text assistant</h2><p class="panel-subtitle">Bolo ya type karo: stock, saved forecast aur dollar budget ka preview.</p></div><span id="voice-state" class="badge" role="status">Ready for text</span></div>
+      <div class="voice-content">
+        <form id="voice-form" style="padding:0">
+          <div class="voice-controls">
+            <label for="voice-language">Speech language<select id="voice-language"><option value="en-IN">English / Hinglish</option><option value="hi-IN">Hindi</option></select></label>
+            <label for="voice-product">Product if name is unclear<select id="voice-product"><option value="">Use spoken name / SKU</option></select></label>
+            <label for="voice-source">Saved forecast source<select id="voice-source"><option value="actual">Actual shop records</option><option value="demo">Demo / synthetic</option></select></label>
+          </div>
+          <div class="voice-controls"><button class="secondary" id="voice-start" type="button">Start mic</button><button class="secondary" id="voice-stop" type="button" disabled>Stop listening</button><button class="secondary" id="voice-cancel" type="button" disabled>Cancel listening</button></div>
+          <p class="hint" id="voice-support">Checking speech support…</p>
+          <p class="hint">Mic starts only when you press Start mic. Your browser's speech service may process audio online. ReSupply stores no audio or command history.</p>
+          <label for="voice-text">Review or edit your command<textarea id="voice-text" maxlength="400" required placeholder="Blue pen ka stock kitna hai?"></textarea></label>
+          <button class="primary" id="voice-preview" type="submit">Preview command</button>
+          <div class="voice-examples"><button class="secondary" id="voice-stock-example" type="button">Stock dikhao</button><button class="secondary" id="voice-low-example" type="button">Low stock dikhao</button><button class="secondary" id="voice-forecast-example" type="button">Forecast dikhao</button><button class="secondary" id="voice-budget-example" type="button">50 dollar budget ka plan banao</button></div>
+        </form>
+        <p class="message error" id="voice-error" role="alert" hidden></p>
+        <div id="voice-result" class="voice-result" role="region" aria-label="Voice command preview" hidden>
+          <p id="voice-answer" role="status"></p><p id="voice-note" class="hint"></p>
+          <div id="voice-choices" class="voice-choices"></div>
+          <div id="voice-table-wrap" class="table-wrap" hidden><table class="voice-table"><thead id="voice-columns"></thead><tbody id="voice-rows"></tbody></table></div>
+          <button id="voice-open" class="secondary" type="button" hidden>Open in app</button>
+        </div>
+        <p class="hint">One supported command at a time. Product names/SKUs work best. The source selector applies to saved forecasts; budget previews use your current purchasing method and planner settings.</p>
+      </div>
+    </section>
+
+</div>
+<div class="screen" id="screen-demo-guide" data-screen="demo-guide" hidden>
+    <section class="panel" aria-labelledby="demo-title">
+      <div class="panel-header"><div><h2 id="demo-title">Try the complete demo shop</h2><p class="panel-subtitle" id="demo-intro">Sample products, synthetic history and the full Sandbox purchasing flow in a separate shop.</p></div><span class="badge">Guided walkthrough</span></div>
+      <div id="demo-tools" class="voice-content" hidden>
+        <div class="voice-controls"><button class="primary" id="demo-prepare" type="button">Prepare demo shop + forecasts</button><button class="secondary" id="demo-refresh" type="button">Check progress</button><button class="secondary" id="demo-plan" type="button" disabled>Open $100 budget plan</button></div>
+        <p id="demo-summary" role="status">Loading demo status…</p>
+        <p id="demo-feedback" class="message success" role="status" hidden></p><p id="demo-error" class="message error" role="alert" hidden></p>
+        <div id="demo-models" aria-label="Sample product forecast reviews"></div>
+        <ol id="demo-progress" class="demo-progress" aria-label="Demo workflow progress"></ol>
+        <p id="demo-note" class="hint"></p>
+        <p class="hint">Prepare can be retried and preserves demo orders, holds, captures and received stock. Voice/text also uses this shop. Use a Sandbox Personal buyer for checkout.</p>
+      </div>
+    </section>
+
+</div>
+    </main>
+  </div>
+  <dialog id="stock-dialog" aria-labelledby="stock-dialog-title">
+    <h2 id="stock-dialog-title">Update stock</h2>
+    <p class="dialog-product" id="stock-product-name"></p>
+    <p class="dialog-current" id="stock-current"></p>
+    <form id="stock-form">
+      <label for="new-stock">New stock quantity
+        <input id="new-stock" type="number" min="0" max="1000000" step="1" required>
+        <span class="hint">Enter the total currently on hand, not the change in quantity.</span>
+      </label>
+      <p class="message error" id="stock-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button class="secondary" id="cancel-stock" type="button">Cancel</button>
+        <button class="primary" id="save-stock" type="submit">Save stock</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="sale-dialog" aria-labelledby="sale-dialog-title">
+    <h2 id="sale-dialog-title">Record sale</h2>
+    <p class="dialog-product" id="sale-product-name"></p>
+    <p class="dialog-current" id="sale-current"></p>
+    <form id="sale-form">
+      <label for="sale-quantity">Quantity sold
+        <input id="sale-quantity" type="number" min="1" max="1000000" step="1" required>
+        <span class="hint">Enter units sold in this new sale. Stock will reduce automatically.</span>
+      </label>
+      <div class="sale-preview" id="sale-preview" role="status"></div>
+      <p class="message error" id="sale-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button class="secondary" id="cancel-sale" type="button">Cancel</button>
+        <button class="primary" id="save-sale" type="submit">Save sale</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="order-dialog" id="order-dialog" aria-labelledby="order-review-title">
+    <div class="dialog-step-label">OWNER REVIEW <span>PayPal Sandbox · USD</span></div>
+    <h2 id="order-review-title">Review order</h2>
+    <p class="dialog-product" id="order-review-description"></p>
+    <span class="status" id="order-review-status"></span>
+    <form id="order-review-form">
+      <div class="table-wrap">
+        <table class="order-table" aria-label="Saved supplier and quantity snapshot for this order">
+          <thead><tr><th scope="col">Product</th><th scope="col">Supplier</th><th scope="col" class="number">Quantity</th><th scope="col" class="number">Unit price</th><th scope="col" class="number">Line total</th></tr></thead>
+          <tbody id="review-rows"></tbody>
+        </table>
+      </div>
+      <p class="dialog-current" id="review-products-total"></p>
+      <div class="order-fields">
+        <label for="order-shipping">Shipping total (USD)<input id="order-shipping" type="number" min="0" max="1000000" step="0.01" value="0.00" required></label>
+        <label for="order-tax">Tax total (USD)<input id="order-tax" type="number" min="0" max="1000000" step="0.01" value="0.00" required></label>
+        <label for="order-limit">Total spending limit (USD)<input id="order-limit" type="number" min="0" max="1000000" step="0.01" required></label>
+      </div>
+      <span class="hint">Enter supplier-confirmed total charges. Zero charges are fine for a demo. This spending limit includes products, shipping and tax.</span>
+      <div class="order-total"><span>Grand total</span><strong id="review-grand-total">—</strong></div>
+      <p class="message" id="review-limit-message" role="status"></p>
+      <p class="message error" id="review-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button class="secondary" id="close-review" type="button">Close</button>
+        <button class="primary" id="approve-order" type="submit">Approve order</button>
+      </div>
+    </form>
+    <section class="checkout-box" id="paypal-checkout" aria-labelledby="paypal-title" hidden>
+      <h3 id="paypal-title">PayPal sandbox payment</h3>
+      <p>Authorize a test hold, then capture the approved total to complete the sandbox payment. Void releases an uncaptured hold and cancels the order.</p>
+      <p class="message" id="paypal-payment-message" role="status"></p>
+      <p class="payment-ids" id="paypal-ids" hidden></p>
+      <p class="message error" id="paypal-error" role="alert" hidden></p>
+      <div class="checkout-actions">
+        <button class="primary" id="paypal-start" type="button">Load PayPal checkout</button>
+        <button class="secondary" id="paypal-retry-authorization" type="button" hidden>Retry authorization</button>
+        <button class="secondary" id="paypal-refresh" type="button" hidden>Refresh payment status</button>
+        <button class="primary" id="paypal-capture" type="button" hidden>Capture test payment</button>
+        <button class="secondary" id="paypal-void" type="button" hidden>Void hold &amp; cancel order</button>
+        <button class="secondary" id="cancel-unpaid-order" type="button" hidden>Cancel unpaid order</button>
+      </div>
+      <div class="paypal-buttons" id="paypal-buttons"></div>
+      <p class="hint">Use a US Personal sandbox buyer. This demo uses one sandbox merchant. Payment and delivery are separate; capture does not add inventory.</p>
+    </section>
+    <section class="checkout-box" id="stock-receiving" aria-labelledby="receiving-title" hidden>
+      <h3 id="receiving-title">Receive stock</h3>
+      <p class="message" id="receiving-message" role="status"></p>
+      <button class="primary" id="receive-stock" type="button" hidden>Receive full stock</button>
+      <ul id="receipt-lines" hidden></ul>
+      <p class="hint">Confirm only after every item in this order has arrived. This step records one full delivery.</p>
+    </section>
+    <section class="checkout-box" id="order-action-confirm" aria-labelledby="order-action-title" hidden>
+      <h3 id="order-action-title"></h3>
+      <p id="order-action-description"></p>
+      <div class="checkout-actions">
+        <button class="secondary" id="cancel-order-action" type="button">Back</button>
+        <button class="primary" id="confirm-order-action" type="button">Confirm</button>
+      </div>
+    </section>
+  </dialog>
+  <script src="/assets/shop-workspace.js"></script>
+  <script src="/assets/app-ui.js"></script>
+  <script>
+    (() => {
+      const form = document.getElementById('product-form');
+      const addButton = document.getElementById('add-button');
+      const refreshButton = document.getElementById('refresh-button');
+      const rows = document.getElementById('product-rows');
+      const count = document.getElementById('product-count');
+      const summary = document.getElementById('inventory-summary');
+      const empty = document.getElementById('empty-state');
+      const connection = document.getElementById('connection-status');
+      const success = document.getElementById('success-message');
+      const error = document.getElementById('form-error');
+      const inventoryError = document.getElementById('inventory-error');
+      const stockDialog = document.getElementById('stock-dialog');
+      const stockForm = document.getElementById('stock-form');
+      const newStock = document.getElementById('new-stock');
+      const stockError = document.getElementById('stock-error');
+      const saveStock = document.getElementById('save-stock');
+      const cancelStock = document.getElementById('cancel-stock');
+      let selectedProduct = null;
+      let stockOpener = null;
+      const saleDialog = document.getElementById('sale-dialog');
+      const saleForm = document.getElementById('sale-form');
+      const saleQuantity = document.getElementById('sale-quantity');
+      const saleError = document.getElementById('sale-error');
+      const saveSale = document.getElementById('save-sale');
+      const cancelSale = document.getElementById('cancel-sale');
+      const salesRows = document.getElementById('sales-rows');
+      const salesCount = document.getElementById('sales-count');
+      const salesError = document.getElementById('sales-error');
+      const salesEmpty = document.getElementById('sales-empty');
+      const refreshSales = document.getElementById('refresh-sales');
+      const supplierForm = document.getElementById('supplier-form');
+      const addSupplier = document.getElementById('add-supplier');
+      const supplierSuccess = document.getElementById('supplier-success');
+      const supplierError = document.getElementById('supplier-error');
+      const quoteForm = document.getElementById('quote-form');
+      const quoteProduct = document.getElementById('quote-product');
+      const quoteSupplier = document.getElementById('quote-supplier');
+      const quotePrice = document.getElementById('quote-price');
+      const quoteDelivery = document.getElementById('quote-delivery');
+      const saveQuote = document.getElementById('save-quote');
+      const quoteFormError = document.getElementById('quote-form-error');
+      const quoteRows = document.getElementById('quote-rows');
+      const quotesError = document.getElementById('quotes-error');
+      const quotesEmpty = document.getElementById('quotes-empty');
+      const refreshQuotes = document.getElementById('refresh-quotes');
+      const clearSelection = document.getElementById('clear-supplier-selection');
+      let cachedProducts = [], cachedSuppliers = [], cachedQuotes = [], quoteActionButtons = [];
+      let quoteRequestNumber = 0, quoteReadBusy = false, quoteWriteBusy = false;
+      const restockForm = document.getElementById('restock-form');
+      const calculateRestock = document.getElementById('calculate-restock');
+      const restockRows = document.getElementById('restock-rows');
+      const restockCount = document.getElementById('restock-count');
+      const restockCost = document.getElementById('restock-cost');
+      const restockSummary = document.getElementById('restock-summary');
+      const restockError = document.getElementById('restock-error');
+      const restockEmpty = document.getElementById('restock-empty');
+      let planningSettings = {lead_time_days:3, coverage_days:7, buffer_days:2};
+      let restockRequestNumber = 0;
+      const purchaseForm = document.getElementById('purchase-form');
+      const buildPlan = document.getElementById('build-plan');
+      const purchaseRows = document.getElementById('purchase-rows');
+      const purchaseUsed = document.getElementById('purchase-used');
+      const purchaseRemaining = document.getElementById('purchase-remaining');
+      const purchaseUnits = document.getElementById('purchase-units');
+      const purchaseSummary = document.getElementById('purchase-summary');
+      const purchaseError = document.getElementById('purchase-error');
+      const purchaseEmpty = document.getElementById('purchase-empty');
+      let purchaseBudget = '200.00';
+      let purchaseRequestNumber = 0;
+      const createOrder = document.getElementById('create-order');
+      const orderRows = document.getElementById('order-rows');
+      const ordersError = document.getElementById('orders-error');
+      const ordersEmpty = document.getElementById('orders-empty');
+      const refreshOrders = document.getElementById('refresh-orders');
+      const orderDialog = document.getElementById('order-dialog');
+      const reviewForm = document.getElementById('order-review-form');
+      const reviewError = document.getElementById('review-error');
+      const orderShipping = document.getElementById('order-shipping');
+      const orderTax = document.getElementById('order-tax');
+      const orderLimit = document.getElementById('order-limit');
+      const approveOrder = document.getElementById('approve-order');
+      const closeReview = document.getElementById('close-review');
+      const paypalBox = document.getElementById('paypal-checkout');
+      const paypalStart = document.getElementById('paypal-start');
+      const paypalRetry = document.getElementById('paypal-retry-authorization');
+      const paypalRefresh = document.getElementById('paypal-refresh');
+      const paypalCapture = document.getElementById('paypal-capture');
+      const paypalVoid = document.getElementById('paypal-void');
+      const receivingBox = document.getElementById('stock-receiving');
+      const receiveStock = document.getElementById('receive-stock');
+      const actionConfirm = document.getElementById('order-action-confirm');
+      const actionAccept = document.getElementById('confirm-order-action');
+      const actionBack = document.getElementById('cancel-order-action');
+      const cancelUnpaid = document.getElementById('cancel-unpaid-order');
+      const paypalButtons = document.getElementById('paypal-buttons');
+      const paypalError = document.getElementById('paypal-error');
+      let paymentBusy = false, checkoutGeneration = 0, sdkPromise = null, sdkClientId = null, paypalButtonInstance = null;
+      let latestPurchasePlan = null, pendingDraftRequest = null, currentOrder = null;
+      let orderBusy = false, approvalBusy = false, ordersRequestNumber = 0, reviewRequestNumber = 0;
+      const approvalRequests = new Map();
+      const receivingRequests = new Map();
+      let pendingOrderAction = null;
+      const quantityFormatter = new Intl.NumberFormat('en-IN', {maximumFractionDigits:2});
+      let saleProduct = null;
+      let saleOpener = null;
+      let saleRequestId = null;
+      const saleDateFormatter = new Intl.DateTimeFormat('en-IN', {
+        timeZone:'Asia/Kolkata', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'
+      });
+      const costFormatter = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD'});
+
+      function show(element, text) {
+        element.textContent = text;
+        element.hidden = !text;
+      }
+
+      async function api(path, options = {}) {
+        const response = await window.resupplyFetch(path, options);
+        let data;
+        try { data = await response.json(); }
+        catch { throw new Error('Could not confirm the result. Please retry the same request.'); }
+        if (!response.ok) {
+          let detail = data.detail || 'Request could not be completed.';
+          if (Array.isArray(detail)) detail = detail.map(item => String(item.loc.at(-1)) + ': ' + item.msg).join(' ');
+          const issue = new Error(String(detail));
+          issue.confirmedFailure = response.status >= 400 && response.status < 500;
+          throw issue;
+        }
+        return data;
+      }
+
+      function dashboardData(section,data,status='ready') {
+        window.dispatchEvent?.(new CustomEvent('resupply-dashboard-data',{detail:{section,data,status}}));
+      }
+
+      function renderProducts(products) {
+        rows.replaceChildren();
+        for (const product of products) {
+          const row = document.createElement('tr');
+          const nameCell = document.createElement('td');
+          nameCell.className = 'product-name';
+          nameCell.textContent = product.name;
+          const skuCell = document.createElement('td');
+          skuCell.className = 'sku';
+          skuCell.textContent = product.sku;
+          const stockCell = document.createElement('td');
+          stockCell.className = 'number';
+          const stockLabel = document.createElement('span');
+          stockLabel.className = 'stock' + (product.stock === 0 ? ' zero' : '');
+          stockLabel.textContent = product.stock === 0 ? 'Out of stock' : String(product.stock);
+          stockCell.append(stockLabel);
+          const costCell = document.createElement('td');
+          costCell.className = 'number';
+          costCell.textContent = costFormatter.format(Number(product.unit_cost));
+          const actionCell = document.createElement('td');
+          actionCell.className = 'action-cell';
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.className = 'secondary';
+          editButton.dataset.productId = String(product.id);
+          editButton.textContent = 'Update stock';
+          editButton.setAttribute('aria-label', 'Update stock for ' + product.name);
+          editButton.addEventListener('click', () => {
+            selectedProduct = product;
+            stockOpener = editButton;
+            document.getElementById('stock-product-name').textContent = product.name + ' · ' + product.sku;
+            document.getElementById('stock-current').textContent = 'Current stock: ' + product.stock;
+            newStock.value = String(product.stock);
+            show(stockError, '');
+            stockDialog.showModal();
+            newStock.focus();
+            newStock.select();
+          });
+          actionCell.append(editButton);
+          const saleButton = document.createElement('button');
+          saleButton.type = 'button';
+          saleButton.className = 'secondary';
+          saleButton.dataset.saleProductId = String(product.id);
+          saleButton.textContent = 'Record sale';
+          saleButton.disabled = product.stock === 0;
+          saleButton.setAttribute('aria-label', 'Record sale for ' + product.name);
+          saleButton.addEventListener('click', () => {
+            saleProduct = product;
+            saleOpener = saleButton;
+            saleRequestId = crypto.randomUUID();
+            document.getElementById('sale-product-name').textContent = product.name + ' · ' + product.sku;
+            document.getElementById('sale-current').textContent = 'Current stock: ' + product.stock;
+            saleQuantity.value = '1';
+            saleQuantity.max = String(product.stock);
+            show(saleError, '');
+            updateSalePreview();
+            saleDialog.showModal();
+            saleQuantity.focus();
+            saleQuantity.select();
+          });
+          actionCell.append(saleButton);
+          row.append(nameCell, skuCell, stockCell, costCell, actionCell);
+          rows.append(row);
+        }
+        count.textContent = products.length + (products.length === 1 ? ' product' : ' products');
+        empty.hidden = products.length > 0;
+        const units = products.reduce((total, product) => total + product.stock, 0);
+        summary.textContent = units + (units === 1 ? ' unit on hand' : ' units on hand');
+        dashboardData('products',products);
+      }
+
+      async function loadProducts() {
+        dashboardData('products',null,'loading');
+        refreshButton.disabled = true;
+        show(inventoryError, '');
+        try {
+          const products = await api('/api/products');
+          renderProducts(products);
+          if (populateProductChoices(products)) await loadQuotes();
+          window.dispatchEvent?.(new Event('resupply-catalog-changed'));
+          connection.textContent = 'Connected';
+          connection.className = 'badge connected';
+          return true;
+        } catch (issue) {
+          dashboardData('products',null,'error');
+          connection.textContent = 'Connection problem';
+          connection.className = 'badge disconnected';
+          count.textContent = 'Inventory unavailable';
+          summary.textContent = 'Refresh to try again.';
+          show(inventoryError, 'Could not load inventory. Please try Refresh.');
+          return false;
+        } finally {
+          refreshButton.disabled = false;
+        }
+      }
+
+      function updateSalePreview() {
+        if (!saleProduct) return;
+        const quantity = Number(saleQuantity.value);
+        const valid = Number.isInteger(quantity) && quantity > 0 && quantity <= saleProduct.stock;
+        document.getElementById('sale-preview').textContent = valid
+          ? 'Stock after this sale: ' + (saleProduct.stock - quantity)
+          : 'Enter a quantity between 1 and ' + saleProduct.stock + '.';
+      }
+
+      async function loadSales() {
+        refreshSales.disabled = true;
+        show(salesError, '');
+        try {
+          const sales = await api('/api/sales');
+          salesRows.replaceChildren();
+          for (const sale of sales) {
+            const row = document.createElement('tr');
+            const recorded = document.createElement('td');
+            recorded.textContent = saleDateFormatter.format(new Date(sale.recorded_at));
+            const product = document.createElement('td');
+            product.className = 'product-name';
+            product.textContent = sale.name + ' · ' + sale.sku;
+            const quantity = document.createElement('td');
+            quantity.className = 'number';
+            quantity.textContent = String(sale.quantity);
+            const after = document.createElement('td');
+            after.className = 'number';
+            after.textContent = String(sale.stock_after);
+            row.append(recorded, product, quantity, after);
+            salesRows.append(row);
+          }
+          salesCount.textContent = sales.length + (sales.length === 1 ? ' sale record shown' : ' sale records shown');
+          salesEmpty.hidden = sales.length > 0;
+          return true;
+        } catch (issue) {
+          salesCount.textContent = 'Sales unavailable';
+          show(salesError, 'Could not load sales. Please try Refresh sales.');
+          return false;
+        } finally { refreshSales.disabled = false; }
+      }
+
+      function note(cell, text) {
+        const line = document.createElement('span');
+        line.className = 'cell-note';
+        line.textContent = text;
+        cell.append(line);
+      }
+
+      function option(value, label) {
+        const item = document.createElement('option');
+        item.value = String(value);
+        item.textContent = label;
+        return item;
+      }
+
+      function setQuoteControls() {
+        const busy = quoteWriteBusy || quoteReadBusy;
+        quoteProduct.disabled = quoteWriteBusy || cachedProducts.length === 0;
+        quoteSupplier.disabled = busy || cachedSuppliers.length === 0;
+        quotePrice.disabled = quoteDelivery.disabled = busy || cachedProducts.length === 0 || cachedSuppliers.length === 0;
+        saveQuote.disabled = busy || cachedProducts.length === 0 || cachedSuppliers.length === 0;
+        refreshQuotes.disabled = busy || !quoteProduct.value;
+        clearSelection.disabled = busy || !cachedQuotes.some(quote => quote.selected);
+        for (const button of quoteActionButtons) button.disabled = busy || button.dataset.selected === 'true';
+      }
+
+      function populateProductChoices(products) {
+        const previous = quoteProduct.value;
+        cachedProducts = products;
+        quoteProduct.replaceChildren();
+        if (!products.length) quoteProduct.append(option('', 'Add a product first'));
+        for (const product of products) quoteProduct.append(option(product.id, product.name + ' · ' + product.sku));
+        quoteProduct.value = products.some(product => String(product.id) === previous)
+          ? previous : products.length ? String(products[0].id) : '';
+        setQuoteControls();
+        return previous !== quoteProduct.value;
+      }
+
+      function prefillQuote() {
+        if (quoteWriteBusy || quoteReadBusy) return;
+        const quote = cachedQuotes.find(item => String(item.supplier_id) === quoteSupplier.value);
+        quotePrice.value = quote ? String(quote.unit_cost) : '';
+        quoteDelivery.value = quote ? String(quote.lead_time_days) : '3';
+      }
+
+      async function loadSuppliers() {
+        try {
+          const suppliers = await api('/api/suppliers');
+          const previous = quoteSupplier.value;
+          cachedSuppliers = suppliers;
+          quoteSupplier.replaceChildren();
+          if (!suppliers.length) quoteSupplier.append(option('', 'Add a supplier first'));
+          for (const supplier of suppliers) quoteSupplier.append(option(supplier.id, supplier.name));
+          quoteSupplier.value = suppliers.some(supplier => String(supplier.id) === previous)
+            ? previous : suppliers.length ? String(suppliers[0].id) : '';
+          document.getElementById('supplier-count').textContent = suppliers.length + ' supplier(s)';
+          setQuoteControls();
+          prefillQuote();
+          return true;
+        } catch (issue) {
+          document.getElementById('supplier-count').textContent = 'Suppliers unavailable';
+          show(supplierError, 'Could not load suppliers. Try Refresh quotes or reload the page.');
+          return false;
+        }
+      }
+
+      function renderQuotes(quotes) {
+        quoteRows.replaceChildren();
+        quoteActionButtons = [];
+        const cheapest = Math.min(...quotes.map(quote => Number(quote.unit_cost)));
+        const fastest = Math.min(...quotes.map(quote => quote.lead_time_days));
+        for (const quote of quotes) {
+          const row = document.createElement('tr');
+          const supplier = document.createElement('td');
+          supplier.className = 'product-name';
+          supplier.textContent = quote.supplier_name;
+          if (quote.contact) note(supplier, quote.contact);
+          note(supplier, 'Updated: ' + saleDateFormatter.format(new Date(quote.updated_at)));
+          const price = document.createElement('td');
+          price.className = 'number';
+          price.textContent = costFormatter.format(Number(quote.unit_cost));
+          const delivery = document.createElement('td');
+          delivery.className = 'number';
+          delivery.textContent = quote.lead_time_days + ' days';
+          const tags = document.createElement('td');
+          for (const [matches, label] of [[Number(quote.unit_cost) === cheapest, 'Lowest unit price'], [quote.lead_time_days === fastest, 'Fastest delivery']]) {
+            if (!matches) continue;
+            const tag = document.createElement('span');
+            tag.className = 'quote-tag';
+            tag.textContent = label;
+            tags.append(tag);
+          }
+          const action = document.createElement('td');
+          const choose = document.createElement('button');
+          choose.type = 'button';
+          choose.className = 'secondary';
+          choose.textContent = quote.selected ? 'Selected' : 'Use this supplier';
+          choose.dataset.selected = String(quote.selected);
+          choose.setAttribute('aria-label', 'Use ' + quote.supplier_name + ' for ' + quote.product_name);
+          choose.addEventListener('click', () => mutateQuote(
+            () => api('/api/products/' + quote.product_id + '/supplier-selection', {
+              method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({quote_id:quote.id})
+            }),
+            result => {quoteSupplier.value = String(result.supplier_id); return result.supplier_name + ' selected for ' + result.product_name + '.';}
+          ));
+          quoteActionButtons.push(choose);
+          action.append(choose);
+          row.append(supplier, price, delivery, tags, action);
+          quoteRows.append(row);
+        }
+        const selected = quotes.find(quote => quote.selected);
+        document.getElementById('quote-count').textContent = quotes.length + ' quote(s) for the chosen product. '
+          + (selected ? 'Selected: ' + selected.supplier_name : 'Planning uses the saved product price until you select a supplier.');
+        quotesEmpty.hidden = quotes.length > 0;
+        setQuoteControls();
+      }
+
+      async function loadQuotes() {
+        const requestNumber = ++quoteRequestNumber;
+        cachedQuotes = [];
+        quoteRows.replaceChildren();
+        quoteActionButtons = [];
+        quotesEmpty.hidden = true;
+        show(quotesError, '');
+        if (!quoteProduct.value) {
+          document.getElementById('quote-count').textContent = 'Add a product to compare supplier quotes.';
+          quoteReadBusy = false;
+          setQuoteControls();
+          return false;
+        }
+        quoteReadBusy = true;
+        document.getElementById('quote-count').textContent = 'Loading quotes…';
+        setQuoteControls();
+        try {
+          const quotes = await api('/api/products/' + quoteProduct.value + '/quotes');
+          if (requestNumber !== quoteRequestNumber) return false;
+          cachedQuotes = quotes;
+          renderQuotes(quotes);
+          return true;
+        } catch (issue) {
+          if (requestNumber !== quoteRequestNumber) return false;
+          document.getElementById('quote-count').textContent = 'Quotes unavailable';
+          show(quotesError, issue instanceof TypeError ? 'Could not load quotes. Try Refresh quotes.' : issue.message);
+          return false;
+        } finally {
+          if (requestNumber === quoteRequestNumber) {
+            quoteReadBusy = false;
+            setQuoteControls();
+            prefillQuote();
+          }
+        }
+      }
+
+      function invalidateSourcingPlan() {
+        ++restockRequestNumber;
+        restockRows.replaceChildren();
+        restockCount.textContent = restockCost.textContent = '…';
+        restockEmpty.hidden = true;
+        restockSummary.textContent = 'Updating supplier sourcing…';
+        calculateRestock.disabled = true;
+        invalidatePurchasePlan('Updating supplier sourcing…', true);
+      }
+
+      async function mutateQuote(operation, message, errorTarget = quotesError) {
+        if (quoteWriteBusy) return;
+        quoteWriteBusy = true;
+        show(errorTarget, '');
+        show(document.getElementById('quote-feedback'), '');
+        setQuoteControls();
+        invalidateSourcingPlan();
+        let refreshed = false;
+        try {
+          const result = await operation();
+          show(document.getElementById('quote-feedback'), message(result));
+          refreshed = await loadQuotes();
+        } catch (issue) {
+          show(errorTarget, issue instanceof TypeError ? 'Could not confirm the change. Retry or use Refresh quotes to check.' : issue.message);
+        } finally {
+          await loadRestock();
+          quoteWriteBusy = false;
+          setQuoteControls();
+          if (refreshed) prefillQuote();
+        }
+      }
+
+      supplierForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (addSupplier.disabled || !supplierForm.reportValidity()) return;
+        show(supplierError, '');
+        show(supplierSuccess, '');
+        addSupplier.disabled = true;
+        addSupplier.textContent = 'Adding…';
+        try {
+          const supplier = await api('/api/suppliers', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name:document.getElementById('supplier-name').value.trim(), contact:document.getElementById('supplier-contact').value.trim()})
+          });
+          supplierForm.reset();
+          show(supplierSuccess, supplier.name + ' saved.');
+          await loadSuppliers();
+          if (cachedSuppliers.some(item => item.id === supplier.id)) quoteSupplier.value = String(supplier.id);
+          prefillQuote();
+        } catch (issue) {
+          show(supplierError, issue instanceof TypeError ? 'Could not confirm the supplier. Use Refresh quotes to check the list before retrying.' : issue.message);
+        } finally {
+          addSupplier.disabled = false;
+          addSupplier.textContent = 'Add supplier';
+        }
+      });
+      quoteProduct.addEventListener('change', async () => {
+        show(document.getElementById('quote-feedback'), '');
+        show(quoteFormError, '');
+        await loadQuotes();
+      });
+      quoteSupplier.addEventListener('change', () => {show(quoteFormError, ''); prefillQuote();});
+      quoteForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (saveQuote.disabled || !quoteForm.reportValidity()) return;
+        const productId = quoteProduct.value;
+        const payload = {supplier_id:Number(quoteSupplier.value), unit_cost:quotePrice.value, lead_time_days:Number(quoteDelivery.value)};
+        await mutateQuote(
+          () => api('/api/products/' + productId + '/quotes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
+          result => result.supplier_name + ': quote saved for ' + result.product_name + '.', quoteFormError
+        );
+      });
+      clearSelection.addEventListener('click', async () => {
+        if (clearSelection.disabled || !quoteProduct.value) return;
+        const productId = quoteProduct.value;
+        await mutateQuote(
+          () => api('/api/products/' + productId + '/supplier-selection', {method:'DELETE'}),
+          () => 'Supplier selection cleared. Planning uses the saved product price and default delivery time.'
+        );
+      });
+      refreshQuotes.addEventListener('click', async () => {
+        if (quoteWriteBusy) return;
+        await loadSuppliers();
+        await loadQuotes();
+        await loadRestock();
+      });
+
+      function renderRestock(plan) {
+        const statusLabels = {
+          no_history:'Need sales history', no_recent_sales:'No recent recorded sales',
+          out_of_stock:'Out of stock', delivery_risk:'Delivery risk',
+          restock:'Consider restocking', enough_stock:'Enough stock'
+        };
+        restockRows.replaceChildren();
+        for (const item of plan.items) {
+          const row = document.createElement('tr');
+          const product = document.createElement('td');
+          product.className = 'product-name';
+          product.textContent = item.name;
+          note(product, item.sku);
+          const status = document.createElement('span');
+          status.className = 'status ' + item.status;
+          status.textContent = statusLabels[item.status];
+          product.append(status);
+          note(product, item.supplier_name ? 'Supplier: ' + item.supplier_name : 'Saved product price; supplier not selected');
+          if (item.forecast_run_id) note(product, (item.demand_source === 'reviewed_ml' ? 'Reviewed ML' : 'Reviewed forecast average') + ' #' + item.forecast_run_id);
+          const average = document.createElement('td');
+          average.className = 'number';
+          average.textContent = item.average_daily_sales === null ? '—' : '≈ ' + quantityFormatter.format(item.average_daily_sales);
+          note(average, item.history_status === 'no_history' ? 'No recorded sales'
+            : item.history_status === 'owner_estimate' ? 'Your starting estimate · not recorded sales or ML'
+            : item.history_status === 'today_only' ? "Today's estimate · partial day"
+            : item.history_status === 'reviewed_forecast' ? 'Forecast trained on ' + item.days_used + ' actual days'
+            : item.history_status === 'completed_days' ? item.units_sold + ' units / ' + item.days_used + ' confirmed actual day(s)'
+            : item.units_sold + ' units / ' + item.days_used + ' completed day(s)');
+          const stock = document.createElement('td');
+          stock.className = 'number';
+          stock.textContent = quantityFormatter.format(item.stock);
+          note(stock, item.estimated_days_left === null ? 'Days left unknown' : '≈ ' + quantityFormatter.format(item.estimated_days_left) + ' days left');
+          if (item.incoming_units) note(stock, item.incoming_units + ' incoming units counted by date');
+          const buy = document.createElement('td');
+          buy.className = 'number';
+          buy.textContent = item.suggested_quantity === null ? 'Need sales' : quantityFormatter.format(item.suggested_quantity);
+          if (item.target_stock !== null) note(buy, 'Target: ' + quantityFormatter.format(item.target_stock) + ' units');
+          const cost = document.createElement('td');
+          cost.className = 'number';
+          cost.textContent = item.estimated_cost === null ? '—' : costFormatter.format(Number(item.estimated_cost));
+          const why = document.createElement('td');
+          why.textContent = item.reason;
+          if (item.window_start) note(why, 'Window: ' + item.window_start + ' to ' + item.window_end);
+          note(why, 'Delivery: ' + item.lead_time_days + ' days · Target: ' + item.target_days + ' days.');
+          if (item.history_status !== 'today_only' && item.history_status !== 'no_history') {
+            note(why, 'Today: ' + item.today_units + (item.forecast_run_id ? ' recorded units removed from remaining-day forecast.' : ' units recorded; excluded from average.'));
+          }
+          row.append(product, average, stock, buy, cost, why);
+          restockRows.append(row);
+        }
+        restockCount.textContent = String(plan.suggested_products);
+        restockCost.textContent = costFormatter.format(Number(plan.estimated_total_cost));
+        restockSummary.textContent = 'Calculated on ' + plan.shop_date + ' (IST). Default delivery ' + plan.lead_time_days
+          + ' + coverage ' + plan.coverage_days + ' + buffer ' + plan.buffer_days + ' = ' + plan.target_days + ' days of target stock for products without supplier selections. '
+          + plan.selected_supplier_products + ' product(s) use their selected supplier delivery time.';
+        restockEmpty.hidden = plan.items.length > 0;
+        dashboardData('restock',plan);
+      }
+
+      async function loadRestock() {
+        dashboardData('restock',null,'loading');
+        const requestNumber = ++restockRequestNumber;
+        invalidatePurchasePlan('Updating restock estimates…', true);
+        calculateRestock.disabled = true;
+        calculateRestock.textContent = 'Updating…';
+        show(restockError, '');
+        restockRows.replaceChildren();
+        restockEmpty.hidden = true;
+        restockCount.textContent = restockCost.textContent = '…';
+        restockSummary.textContent = 'Updating suggestions…';
+        try {
+          const plan = await api('/api/restock?' + new URLSearchParams(planningSettings));
+          if (requestNumber !== restockRequestNumber) return false;
+          renderRestock(plan);
+          await loadPurchasePlan();
+          return true;
+        } catch (issue) {
+          if (requestNumber !== restockRequestNumber) return false;
+          restockCount.textContent = restockCost.textContent = '—';
+          dashboardData('restock',null,'error');
+          restockSummary.textContent = 'Suggestions unavailable.';
+          show(restockError, issue instanceof TypeError ? 'Could not load suggestions. Check the server and try Update suggestions.' : issue.message);
+          invalidatePurchasePlan('Restock suggestions unavailable. Use Build plan to retry.');
+          return false;
+        } finally {
+          if (requestNumber === restockRequestNumber) {
+            calculateRestock.disabled = false;
+            calculateRestock.textContent = 'Update suggestions';
+          }
+        }
+      }
+
+      restockForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (calculateRestock.disabled || !restockForm.reportValidity()) return;
+        planningSettings = {
+          lead_time_days:Number(document.getElementById('lead-time').value),
+          coverage_days:Number(document.getElementById('coverage-days').value),
+          buffer_days:Number(document.getElementById('buffer-days').value)
+        };
+        await loadRestock();
+      });
+
+      function invalidatePurchasePlan(message, busy = false) {
+        dashboardData('purchase',null,busy?'loading':'error');
+        ++purchaseRequestNumber;
+        latestPurchasePlan = null;
+        setCreateOrderState();
+        purchaseRows.replaceChildren();
+        purchaseEmpty.hidden = true;
+        purchaseUsed.textContent = purchaseRemaining.textContent = purchaseUnits.textContent = busy ? '…' : '—';
+        purchaseSummary.textContent = message;
+        show(purchaseError, '');
+        buildPlan.disabled = busy;
+        buildPlan.textContent = busy ? 'Updating…' : 'Build plan';
+      }
+
+      function renderPurchasePlan(plan) {
+        latestPurchasePlan = plan;
+        setCreateOrderState();
+        const urgencyLabels = {
+          out_of_stock:'Out of stock', delivery_risk:'Delivery risk', restock:'Consider restocking',
+          no_history:'Need sales history', no_recent_sales:'No recent recorded sales', enough_stock:'Enough stock'
+        };
+        const allocationLabels = {
+          included:'Included', partial:'Partially covered', budget_short:'Deferred by budget',
+          price_required:'Confirm unit cost', no_history:'Need sales history', not_needed:'No purchase suggested'
+        };
+        purchaseRows.replaceChildren();
+        for (const item of plan.items) {
+          const row = document.createElement('tr');
+          const product = document.createElement('td');
+          product.className = 'product-name';
+          product.textContent = item.name;
+          note(product, item.sku + ' · Unit: ' + costFormatter.format(Number(item.unit_cost)));
+          const urgency = document.createElement('span');
+          urgency.className = 'status ' + item.restock_status;
+          urgency.textContent = urgencyLabels[item.restock_status];
+          product.append(urgency);
+          if (item.history_status === 'today_only') note(product, "Today's estimate · partial day");
+          else if (item.history_status === 'limited') note(product, 'Limited sales history');
+          else if (item.history_status === 'completed_days') note(product, 'Confirmed actual-day average');
+          if (item.forecast_run_id) note(product, (item.demand_source === 'reviewed_ml' ? 'Reviewed ML' : 'Reviewed forecast average') + ' #' + item.forecast_run_id);
+          if (item.incoming_units) note(product, item.incoming_units + ' incoming units counted by date');
+          note(product, item.supplier_name ? 'Supplier: ' + item.supplier_name + ' · ' + item.lead_time_days + ' days'
+            : 'Choose a supplier before order review');
+          const suggested = document.createElement('td');
+          suggested.className = 'number';
+          suggested.textContent = item.suggested_quantity === null ? 'Need sales' : quantityFormatter.format(item.suggested_quantity);
+          const planned = document.createElement('td');
+          planned.className = 'number';
+          planned.textContent = quantityFormatter.format(item.planned_quantity);
+          const deferred = document.createElement('td');
+          deferred.className = 'number';
+          deferred.textContent = item.deferred_quantity === null ? 'Unknown' : quantityFormatter.format(item.deferred_quantity);
+          const cost = document.createElement('td');
+          cost.className = 'number';
+          cost.textContent = item.suggested_quantity === null || item.allocation_status === 'price_required'
+            ? '—' : costFormatter.format(Number(item.line_cost));
+          const why = document.createElement('td');
+          const status = document.createElement('span');
+          status.className = 'status ' + item.allocation_status;
+          status.textContent = allocationLabels[item.allocation_status];
+          why.append(status);
+          note(why, item.reason);
+          row.append(product, suggested, planned, deferred, cost, why);
+          purchaseRows.append(row);
+        }
+        purchaseUsed.textContent = costFormatter.format(Number(plan.planned_cost));
+        purchaseRemaining.textContent = costFormatter.format(Number(plan.remaining_budget));
+        purchaseUnits.textContent = quantityFormatter.format(plan.planned_units);
+        purchaseSummary.textContent = 'Budget ' + costFormatter.format(Number(plan.budget)) + ' applied. '
+          + plan.planned_products + ' product(s) planned; ' + plan.deferred_products + ' with deferred quantity. '
+          + plan.no_history_products + ' need sales history; ' + plan.price_check_products + ' need a confirmed unit cost. '
+          + plan.planned_without_supplier + ' planned product(s) still need a supplier selection before review.';
+        purchaseEmpty.hidden = plan.items.length > 0;
+        dashboardData('purchase',plan);
+      }
+
+      async function loadPurchasePlan() {
+        const requestNumber = ++purchaseRequestNumber;
+        latestPurchasePlan = null;
+        setCreateOrderState();
+        buildPlan.disabled = true;
+        buildPlan.textContent = 'Building…';
+        purchaseRows.replaceChildren();
+        purchaseEmpty.hidden = true;
+        show(purchaseError, '');
+        purchaseUsed.textContent = purchaseRemaining.textContent = purchaseUnits.textContent = '…';
+        purchaseSummary.textContent = 'Building purchase plan…';
+        try {
+          const plan = await api('/api/purchase-plan?' + new URLSearchParams({...planningSettings, budget:purchaseBudget}));
+          if (requestNumber !== purchaseRequestNumber) return false;
+          renderPurchasePlan(plan);
+          return true;
+        } catch (issue) {
+          if (requestNumber !== purchaseRequestNumber) return false;
+          purchaseUsed.textContent = purchaseRemaining.textContent = purchaseUnits.textContent = '—';
+          purchaseSummary.textContent = 'Purchase plan unavailable.';
+          show(purchaseError, issue instanceof TypeError ? 'Could not build the plan. Check the server and try Build plan.' : issue.message);
+          return false;
+        } finally {
+          if (requestNumber === purchaseRequestNumber) {
+            buildPlan.disabled = false;
+            buildPlan.textContent = 'Build plan';
+          }
+        }
+      }
+
+      purchaseForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (buildPlan.disabled || !purchaseForm.reportValidity()) return;
+        purchaseBudget = document.getElementById('purchase-budget').value;
+        await loadPurchasePlan();
+      });
+
+      function setCreateOrderState() {
+        const ready = latestPurchasePlan && latestPurchasePlan.planned_units > 0
+          && latestPurchasePlan.planned_without_supplier === 0 && latestPurchasePlan.planned_products <= 100;
+        createOrder.disabled = orderBusy || (!pendingDraftRequest && !ready);
+        createOrder.textContent = orderBusy ? 'Saving…' : pendingDraftRequest ? 'Retry draft save' : 'Save draft & review';
+        document.getElementById('draft-help').textContent = pendingDraftRequest
+          ? 'Draft save was not confirmed. Retry the same request or check Saved orders.'
+          : ready ? 'Ready to save a draft. Review the saved quantities and final charges before approving.'
+          : 'Build a plan and choose a supplier for every planned product before saving a draft.';
+      }
+
+      async function loadOrders() {
+        dashboardData('orders',null,'loading');
+        const requestNumber = ++ordersRequestNumber;
+        refreshOrders.disabled = true;
+        show(ordersError, '');
+        try {
+          const orders = await api('/api/orders');
+          if (requestNumber !== ordersRequestNumber) return false;
+          orderRows.replaceChildren();
+          for (const order of orders) {
+            const row = document.createElement('tr');
+            const identity = document.createElement('td');
+            identity.className = 'product-name';
+            identity.textContent = order.number;
+            note(identity, saleDateFormatter.format(new Date(order.created_at)));
+            const units = document.createElement('td');
+            units.className = 'number';
+            units.textContent = order.item_count + ' / ' + quantityFormatter.format(order.units);
+            const suppliers = document.createElement('td');
+            suppliers.className = 'number';
+            suppliers.textContent = String(order.supplier_count);
+            const total = document.createElement('td');
+            total.className = 'number';
+            total.textContent = costFormatter.format(Number(order.grand_total));
+            const status = document.createElement('td');
+            const badge = document.createElement('span');
+            badge.className = 'status ' + order.status;
+            badge.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+            status.append(badge);
+            const action = document.createElement('td');
+            action.className = 'action-cell';
+            const view = document.createElement('button');
+            view.type = 'button';
+            view.className = 'secondary';
+            view.textContent = order.status === 'draft' ? 'Review' : 'View';
+            view.addEventListener('click', () => viewOrder(order.id));
+            action.append(view);
+            if (order.can_cancel ?? (order.status !== 'cancelled' && !order.payment)) {
+              const cancel = document.createElement('button');
+              cancel.type = 'button';
+              cancel.className = 'secondary';
+              cancel.textContent = order.payment ? 'Cancel unpaid order' : 'Cancel order';
+              cancel.addEventListener('click', () => cancelOrder(order));
+              action.append(cancel);
+            }
+            if (order.payment) note(status, order.status === 'received' && order.payment.state === 'captured'
+              ? 'Test payment captured · stock received' : paymentLabel(order.payment.state));
+            if (order.received_at) note(status, 'Stock received ' + saleDateFormatter.format(new Date(order.received_at)));
+            row.append(identity, units, suppliers, total, status, action);
+            orderRows.append(row);
+          }
+          document.getElementById('orders-count').textContent = orders.length + ' saved order(s) shown';
+          ordersEmpty.hidden = orders.length > 0;
+          dashboardData('orders',orders);
+          window.dispatchEvent?.(new Event('resupply-orders-changed'));
+          return true;
+        } catch (issue) {
+          if (requestNumber !== ordersRequestNumber) return false;
+          orderRows.replaceChildren();
+          ordersEmpty.hidden = true;
+          dashboardData('orders',null,'error');
+          document.getElementById('orders-count').textContent = 'Orders unavailable';
+          show(ordersError, 'Could not load saved orders. Try Refresh orders.');
+          return false;
+        } finally {
+          if (requestNumber === ordersRequestNumber) refreshOrders.disabled = false;
+        }
+      }
+
+      function cents(value) {
+        if (String(value).trim() === '') return null;
+        const amount = Number(value);
+        const rounded = Math.round(amount * 100);
+        return Number.isFinite(amount) && amount >= 0 && amount <= 1000000 && Math.abs(amount * 100 - rounded) < 0.000001 ? rounded : null;
+      }
+
+      function updateOrderPreview() {
+        if (!currentOrder) return;
+        const shipping = cents(orderShipping.value), tax = cents(orderTax.value), limit = cents(orderLimit.value);
+        const valid = shipping !== null && tax !== null && limit !== null;
+        const total = valid ? Math.round(Number(currentOrder.products_total) * 100) + shipping + tax : null;
+        document.getElementById('review-grand-total').textContent = valid ? costFormatter.format(total / 100) : '—';
+        const verdict = document.getElementById('review-limit-message');
+        verdict.className = 'message ' + (valid && total <= limit ? 'success' : 'error');
+        verdict.textContent = !valid ? 'Enter valid money amounts with at most two decimal places.'
+          : total <= limit ? 'Within the total spending limit.' : 'Exceeds the spending limit by ' + costFormatter.format((total - limit) / 100) + '.';
+        const pending = approvalRequests.has(currentOrder.id);
+        const editable = currentOrder.status === 'draft' && !approvalBusy && !pending;
+        orderShipping.disabled = orderTax.disabled = orderLimit.disabled = !editable;
+        approveOrder.disabled = approvalBusy || currentOrder.status !== 'draft' || (!pending && (!valid || total > limit));
+        approveOrder.textContent = approvalBusy ? 'Approving…' : pending ? 'Retry approval' : 'Approve order';
+        approveOrder.hidden = currentOrder.status !== 'draft';
+        closeReview.disabled = approvalBusy || paymentBusy;
+      }
+
+      function displayOrder(order) {
+        if (!orderDialog.open) window.resupplyNavigate?.('orders');
+        disposePaypalButtons();
+        ++reviewRequestNumber;
+        currentOrder = order;
+        pendingOrderAction = null;
+        actionConfirm.hidden = true;
+        if (order.status !== 'draft') approvalRequests.delete(order.id);
+        const pending = approvalRequests.get(order.id);
+        document.getElementById('order-review-title').textContent = order.status === 'draft' ? 'Review order' : 'Saved order';
+        document.getElementById('order-review-description').textContent = order.number + ' · Estimate date ' + order.source_date + ' (IST). Saved supplier and quantity snapshot.';
+        const status = document.getElementById('order-review-status');
+        status.className = 'status ' + order.status;
+        status.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+        const rows = document.getElementById('review-rows');
+        rows.replaceChildren();
+        for (const item of order.items) {
+          const row = document.createElement('tr');
+          const product = document.createElement('td');
+          product.className = 'product-name';
+          product.textContent = item.name;
+          note(product, item.sku);
+          if (item.history_status === 'today_only') note(product, "Today's estimate · partial day");
+          if (item.forecast_run_id) note(product, 'Saved ' + (item.demand_source === 'reviewed_ml' ? 'ML' : 'forecast average') + ' #' + item.forecast_run_id);
+          if (item.incoming_units) note(product, 'Saved incoming assumption: ' + item.incoming_units + ' units');
+          const supplier = document.createElement('td');
+          supplier.textContent = item.supplier_name;
+          note(supplier, item.lead_time_days + ' delivery days');
+          const quantity = document.createElement('td'); quantity.className = 'number'; quantity.textContent = quantityFormatter.format(item.quantity);
+          const price = document.createElement('td'); price.className = 'number'; price.textContent = costFormatter.format(Number(item.unit_cost));
+          const total = document.createElement('td'); total.className = 'number'; total.textContent = costFormatter.format(Number(item.line_total));
+          row.append(product, supplier, quantity, price, total);
+          rows.append(row);
+        }
+        document.getElementById('review-products-total').textContent = 'Products total: ' + costFormatter.format(Number(order.products_total));
+        orderShipping.value = pending ? pending.shipping_cost : String(order.shipping_cost);
+        orderTax.value = pending ? pending.tax_cost : String(order.tax_cost);
+        orderLimit.value = pending ? pending.spending_limit : String(order.spending_limit);
+        show(reviewError, pending ? 'Approval was not confirmed. Retry the same request or refresh Saved orders to check.' : '');
+        updateOrderPreview();
+        show(paypalError, '');
+        renderPayment();
+        if (!orderDialog.open) orderDialog.showModal();
+        closeReview.focus();
+      }
+
+      async function viewOrder(orderId) {
+        if (paymentBusy || approvalBusy || orderBusy) return;
+        const requestNumber = ++reviewRequestNumber;
+        try {
+          const order = await api('/api/orders/' + orderId);
+          if (requestNumber === reviewRequestNumber && !paymentBusy) displayOrder(order);
+        } catch (issue) {
+          if (requestNumber === reviewRequestNumber) show(ordersError, 'Could not open this order. Try Refresh orders.');
+        }
+      }
+
+      createOrder.addEventListener('click', async () => {
+        if (createOrder.disabled || orderBusy || paymentBusy) return;
+        pendingDraftRequest ||= {...planningSettings, budget:purchaseBudget, request_id:crypto.randomUUID()};
+        orderBusy = true;
+        setCreateOrderState();
+        show(ordersError, '');
+        try {
+          const receipt = await api('/api/orders', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(pendingDraftRequest)});
+          pendingDraftRequest = null;
+          show(document.getElementById('orders-feedback'), receipt.order.number + ' saved. Review before approving.');
+          displayOrder(receipt.order);
+          await loadOrders();
+        } catch (issue) {
+          if (issue.confirmedFailure) pendingDraftRequest = null;
+          show(ordersError, issue instanceof TypeError ? 'Could not confirm draft save. Retry the same request or check Saved orders.' : issue.message);
+          await loadOrders();
+        } finally {
+          orderBusy = false;
+          setCreateOrderState();
+        }
+      });
+
+      async function cancelOrder(order) {
+        if (orderBusy || approvalBusy || paymentBusy) return;
+        orderBusy = true;
+        setCreateOrderState();
+        renderPayment();
+        show(ordersError, '');
+        try {
+          const saved = await api('/api/orders/' + order.id + '/cancel', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({expected_version:order.version})});
+          approvalRequests.delete(order.id);
+          show(document.getElementById('orders-feedback'), saved.number + ' cancelled. A fresh draft can be created if needed.');
+          if (orderDialog.open && currentOrder?.id === order.id) displayOrder(saved);
+        } catch (issue) {
+          const message = issue instanceof TypeError ? 'Could not confirm cancellation. Refresh orders to check.' : issue.message;
+          let observed = null;
+          try {observed = await api('/api/orders/' + order.id);} catch {}
+          if (observed?.status === 'cancelled') {
+            approvalRequests.delete(order.id);
+            show(document.getElementById('orders-feedback'), observed.number + ' cancellation confirmed. Build a fresh purchase plan to save a new draft.');
+            if (orderDialog.open && currentOrder?.id === order.id) displayOrder(observed);
+          } else {
+            show(ordersError, message);
+            if (orderDialog.open && currentOrder?.id === order.id) {
+              if (observed) displayOrder(observed);
+              show(paypalError, message);
+            }
+          }
+        } finally {
+          await loadOrders();
+          orderBusy = false;
+          setCreateOrderState();
+          renderPayment();
+        }
+      }
+
+      reviewForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!currentOrder || approvalBusy || approveOrder.disabled || currentOrder.status !== 'draft') return;
+        let payload = approvalRequests.get(currentOrder.id);
+        if (!payload) {
+          if (!reviewForm.reportValidity()) return;
+          payload = {request_id:crypto.randomUUID(), expected_version:currentOrder.version,
+            shipping_cost:orderShipping.value, tax_cost:orderTax.value, spending_limit:orderLimit.value};
+          approvalRequests.set(currentOrder.id, payload);
+        }
+        const orderId = currentOrder.id;
+        approvalBusy = true;
+        show(reviewError, '');
+        updateOrderPreview();
+        try {
+          const receipt = await api('/api/orders/' + orderId + '/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+          approvalRequests.delete(orderId);
+          displayOrder(receipt.order);
+          show(document.getElementById('orders-feedback'), receipt.order.number + ' approved. Approval saved; payment has not started.');
+          await loadOrders();
+        } catch (issue) {
+          if (issue.confirmedFailure) approvalRequests.delete(orderId);
+          show(reviewError, issue instanceof TypeError ? 'Could not confirm approval. Retry the same request or refresh Saved orders to check.' : issue.message);
+        } finally {
+          approvalBusy = false;
+          updateOrderPreview();
+        }
+      });
+      for (const input of [orderShipping, orderTax, orderLimit]) input.addEventListener('input', updateOrderPreview);
+      closeReview.addEventListener('click', () => {if (!approvalBusy && !paymentBusy) orderDialog.close();});
+      orderDialog.addEventListener('cancel', event => {if (approvalBusy || paymentBusy) event.preventDefault();});
+      orderDialog.addEventListener('close', () => {pendingOrderAction = null; actionConfirm.hidden = true; disposePaypalButtons(); if (!createOrder.disabled) createOrder.focus(); else refreshOrders.focus();});
+      refreshOrders.addEventListener('click', loadOrders);
+
+      function paymentLabel(state) {
+        return ({creating:'Creating checkout', create_unknown:'Create result unknown', create_failed:'Checkout rejected',
+          ready:'Awaiting buyer / authorization', authorizing:'Authorization in progress', authorize_unknown:'Authorization unconfirmed',
+          authorized:'Test funds held · not captured', voided:'Test hold voided', expired:'Test hold expired',
+          review_required:'Payment needs review', cancelled_unpaid:'Unpaid checkout disabled in app',
+          capturing:'Capturing test payment', capture_unknown:'Capture unconfirmed', capture_pending:'Capture pending',
+          capture_denied:'Capture declined', captured:'Test payment captured · awaiting stock',
+          voiding:'Releasing test hold', void_unknown:'Void unconfirmed'})[state] || state;
+      }
+
+      function disposePaypalButtons() {
+        ++checkoutGeneration;
+        if (paypalButtonInstance?.close) Promise.resolve(paypalButtonInstance.close()).catch(() => {});
+        paypalButtonInstance = null;
+        paypalButtons.replaceChildren();
+      }
+
+      function renderPayment() {
+        const order = currentOrder, payment = order?.payment;
+        receivingBox.hidden = !order || !(order.receipt || payment?.state === 'captured');
+        receiveStock.hidden = !order?.can_receive;
+        receiveStock.disabled = paymentBusy || orderBusy;
+        const receipt = order?.receipt;
+        document.getElementById('receiving-message').textContent = receipt
+          ? quantityFormatter.format(receipt.units) + ' units received on ' + saleDateFormatter.format(new Date(receipt.received_at)) + '. Inventory updated once.'
+          : order ? 'Payment captured. Confirm delivery of all ' + quantityFormatter.format(order.units) + ' units across ' + order.item_count + ' products.' : '';
+        const receiptLines = document.getElementById('receipt-lines');
+        receiptLines.replaceChildren();
+        receiptLines.hidden = !receipt;
+        if (receipt) for (const item of receipt.items) {
+          const line = document.createElement('li');
+          line.textContent = item.name + ' (' + item.sku + '): +' + item.quantity + ' units; stock at receipt ' + item.stock_before + ' → ' + item.stock_after;
+          receiptLines.append(line);
+        }
+        actionConfirm.hidden = !pendingOrderAction;
+        actionAccept.disabled = actionBack.disabled = paymentBusy || orderBusy;
+        paypalBox.hidden = !order || !(order.status === 'approved' || order.status === 'received' || ['voided','expired'].includes(payment?.state));
+        if (paypalBox.hidden) return;
+        const state = payment?.state;
+        const checkoutAllowed = order.status === 'approved' && (!payment || ['ready','creating','create_unknown','create_failed'].includes(state));
+        paypalStart.hidden = !checkoutAllowed || !!paypalButtonInstance;
+        paypalStart.disabled = paymentBusy || orderBusy;
+        paypalStart.textContent = paymentBusy ? 'Please wait…' : payment ? 'Resume PayPal checkout' : 'Load PayPal checkout';
+        paypalRetry.hidden = !payment?.paypal_order_id || !(
+          (state === 'ready' && payment.paypal_status === 'APPROVED') || ['authorizing','authorize_unknown'].includes(state));
+        paypalRetry.disabled = paymentBusy || orderBusy;
+        paypalRefresh.hidden = !payment;
+        paypalRefresh.disabled = paymentBusy || orderBusy;
+        paypalCapture.hidden = !order.can_capture;
+        paypalCapture.disabled = paymentBusy || orderBusy;
+        paypalCapture.textContent = ['capture_unknown','capturing'].includes(state) ? 'Retry test capture' : 'Capture test payment';
+        paypalVoid.hidden = !order.can_void;
+        paypalVoid.disabled = paymentBusy || orderBusy;
+        paypalVoid.textContent = ['void_unknown','voiding'].includes(state) ? 'Retry void & cancel' : 'Void hold & cancel order';
+        cancelUnpaid.hidden = !payment || !order.can_cancel;
+        cancelUnpaid.disabled = paymentBusy || orderBusy;
+        const message = document.getElementById('paypal-payment-message');
+        message.className = 'message ' + (['authorized','captured','voided'].includes(state) ? 'success' : '');
+        const label = state === 'captured' && receipt ? 'Test payment captured · stock received' : paymentLabel(state);
+        message.textContent = payment ? label + '. ' + (state === 'captured' && receipt ? 'Full delivery is recorded below.' : payment.message)
+          : 'Checkout has not started. Approved amount: ' + costFormatter.format(Number(order.grand_total)) + '.';
+        const ids = [];
+        if (payment?.paypal_order_id) ids.push('PayPal order: ' + payment.paypal_order_id);
+        if (payment?.authorization_id) ids.push('Authorization: ' + payment.authorization_id);
+        if (payment?.capture_id) ids.push('Capture: ' + payment.capture_id);
+        if (payment?.expires_at) ids.push('Expires: ' + saleDateFormatter.format(new Date(payment.expires_at)));
+        show(document.getElementById('paypal-ids'), ids.join(' · '));
+        paypalButtons.hidden = !checkoutAllowed;
+        updateOrderPreview();
+      }
+
+      function loadPayPalSdk(clientId) {
+        if (sdkClientId && sdkClientId !== clientId) throw new Error('Sandbox app changed. Reload this page before checkout.');
+        if (sdkPromise) return sdkPromise;
+        sdkClientId = clientId;
+        sdkPromise = new Promise((resolve, reject) => {
+          const tag = document.createElement('script');
+          const params = new URLSearchParams({'client-id':clientId, currency:'USD', intent:'authorize', components:'buttons',
+            'buyer-country':'US', 'disable-funding':'card,credit,paylater,venmo'});
+          tag.src = 'https://www.paypal.com/sdk/js?' + params;
+          tag.async = true;
+          tag.onload = () => window.paypal?.Buttons ? resolve(window.paypal) : reject(new Error('PayPal SDK did not load. Retry checkout.'));
+          tag.onerror = () => {tag.remove(); reject(new Error('Could not load PayPal. Check your internet connection, then retry.'));};
+          document.head.append(tag);
+        }).catch(issue => {sdkPromise = null; throw issue;});
+        return sdkPromise;
+      }
+
+      async function refreshPayment(orderId) {
+        const saved = await api('/api/orders/' + orderId + '/paypal/sync', {method:'POST'});
+        if (currentOrder?.id === orderId) {
+          currentOrder = saved;
+          if (!['ready','creating','create_unknown','create_failed'].includes(saved.payment.state)) disposePaypalButtons();
+          renderPayment();
+        }
+        await loadOrders();
+        return saved;
+      }
+
+      let easyCompletePaymentOrderId = null, easyPaymentModeNote = null;
+      async function completeEasyPayment(orderId) {
+        if (easyCompletePaymentOrderId !== orderId || currentOrder?.id !== orderId || !currentOrder.can_capture) return;
+        const saved = await api('/api/orders/' + orderId + '/paypal/capture', {method:'POST',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify({expected_version:currentOrder.version})});
+        if (currentOrder?.id === orderId) {currentOrder=saved;renderPayment();}
+        await loadOrders();
+      }
+      window.addEventListener?.('resupply-easy-open-order', event => {
+        const command=event.detail;
+        if(!command?.order || approvalBusy || paymentBusy || orderBusy || [...document.querySelectorAll('dialog')].some(item=>item.open)) return;
+        displayOrder(command.order);
+        easyCompletePaymentOrderId=command.completePayment?command.order.id:null;
+        if(easyPaymentModeNote)easyPaymentModeNote.remove();easyPaymentModeNote=null;
+        if(command.completePayment){
+          const note=document.createElement('p');easyPaymentModeNote=note;note.id='easy-payment-mode-note';note.className='easy-payment-note';
+          note.textContent='Pay '+costFormatter.format(Number(command.order.grand_total))+' in Sandbox. Your Pay action approves this total. After buyer approval, we authorize and complete (capture) this payment automatically. Stock is added when goods arrive.';
+          document.getElementById('paypal-checkout').prepend(note);
+          if(command.order.payment?.state==='authorized') {
+            paymentBusy=true;renderPayment();
+            completeEasyPayment(command.order.id).catch(issue=>show(paypalError,issue.message+' Refresh payment status before retrying.')).finally(()=>{paymentBusy=false;renderPayment();});
+          } else paypalStart.click();
+        }
+        command.applied=true;
+      });
+      orderDialog.addEventListener('close',()=>{easyCompletePaymentOrderId=null;easyPaymentModeNote?.remove();easyPaymentModeNote=null;});
+      async function confirmAuthorization(orderId, paypalOrderId) {
+        const saved = await api('/api/orders/' + orderId + '/paypal/authorize', {method:'POST',
+          headers:{'Content-Type':'application/json'}, body:JSON.stringify({paypal_order_id:paypalOrderId})});
+        if (currentOrder?.id === orderId) {
+          currentOrder = saved;
+          disposePaypalButtons();
+          renderPayment();
+        }
+        await loadOrders();
+      }
+
+      paypalStart.addEventListener('click', async () => {
+        if (paymentBusy || orderBusy || !currentOrder || currentOrder.status !== 'approved' || paypalStart.hidden) return;
+        const orderId = currentOrder.id, version = currentOrder.version;
+        paymentBusy = true;
+        show(paypalError, '');
+        renderPayment();
+        try {
+          const config = await api('/api/paypal/config');
+          if (!config.configured) throw new Error('Setup pending: copy .env.example to backend/.env, fill Sandbox Client ID/Secret locally and restart the server.');
+          const paypal = await loadPayPalSdk(config.client_id);
+          disposePaypalButtons();
+          const generation = checkoutGeneration;
+          const active = () => currentOrder?.id === orderId && generation === checkoutGeneration && orderDialog.open;
+          const release = () => {paymentBusy = false; renderPayment();};
+          const instance = paypal.Buttons({
+            fundingSource:paypal.FUNDING.PAYPAL,
+            style:{layout:'vertical', color:'gold', shape:'rect', label:'paypal'},
+            onClick:(_data, actions) => {
+              if (!active() || paymentBusy || orderBusy) return actions.reject();
+              paymentBusy = true;
+              show(paypalError, '');
+              renderPayment();
+              return actions.resolve();
+            },
+            createOrder:async () => {
+              if (!active()) throw new Error('Checkout view changed. Reopen the saved order.');
+              try {
+                const receipt = await api('/api/orders/' + orderId + '/paypal/create', {method:'POST',
+                  headers:{'Content-Type':'application/json'}, body:JSON.stringify({expected_version:version})});
+                if (active()) {currentOrder.payment = receipt.payment; currentOrder.can_cancel = false; renderPayment();}
+                return receipt.paypal_order_id;
+              } catch (issue) {
+                show(paypalError, issue.message);
+                throw issue;
+              }
+            },
+            onApprove:async data => {
+              if (!active()) return;
+              paymentBusy = true;
+              renderPayment();
+              try {await confirmAuthorization(orderId, data.orderID);await completeEasyPayment(orderId);}
+              catch (issue) {
+                show(paypalError, issue.message);
+                try {const saved = await refreshPayment(orderId); if (saved.payment.state === 'authorized') show(paypalError, '');} catch {}
+              } finally {release();}
+            },
+            onCancel:async () => {
+              if (!active()) return;
+              show(paypalError, 'Checkout window closed. This does not cancel the saved order. Refresh payment status before retrying.');
+              try {if (currentOrder?.payment) await refreshPayment(orderId);} catch {}
+              release();
+            },
+            onError:async issue => {
+              if (!active()) return;
+              // Do not display raw SDK errors: they can contain URLs or buyer details.
+              const raw = typeof issue === 'string' ? issue : typeof issue?.message === 'string' ? issue.message : '';
+              const codes = ['INSTRUMENT_DECLINED','PAYER_CANNOT_PAY','PAYEE_ACCOUNT_RESTRICTED','PAYEE_ACCOUNT_LOCKED_OR_CLOSED',
+                'TRANSACTION_REFUSED','CURRENCY_NOT_SUPPORTED','INVALID_RESOURCE_ID','ORDER_NOT_APPROVED'];
+              const code = codes.find(value => new RegExp('\\b' + value + '\\b').test(raw));
+              if (!paypalError.textContent) show(paypalError,
+                'PayPal checkout was not confirmed. Use a US Personal sandbox buyer, then refresh payment status before retrying.' +
+                (code ? ' PayPal code: ' + code + '.' : ''));
+              try {
+                const saved = await api('/api/orders/' + orderId);
+                if (currentOrder?.id === orderId) {
+                  currentOrder = saved;
+                  if (saved.payment?.state === 'authorized') show(paypalError, '');
+                  renderPayment();
+                }
+                await loadOrders();
+              } catch {}
+              disposePaypalButtons();
+              release();
+            },
+          });
+          paypalButtonInstance = instance;
+          await instance.render('#paypal-buttons');
+        } catch (issue) {
+          disposePaypalButtons();
+          show(paypalError, issue.message);
+        } finally {paymentBusy = false; renderPayment();}
+      });
+
+      paypalRefresh.addEventListener('click', async () => {
+        if (paymentBusy || orderBusy || !currentOrder?.payment) return;
+        const orderId = currentOrder.id;
+        paymentBusy = true;
+        show(paypalError, '');
+        renderPayment();
+        try {await refreshPayment(orderId);} catch (issue) {show(paypalError, issue.message);}
+        finally {paymentBusy = false; renderPayment();}
+      });
+      cancelUnpaid.addEventListener('click', () => {
+        if (currentOrder && !cancelUnpaid.hidden && !cancelUnpaid.disabled) return cancelOrder(currentOrder);
+      });
+      paypalRetry.addEventListener('click', async () => {
+        if (paymentBusy || orderBusy || !currentOrder?.payment?.paypal_order_id) return;
+        const orderId = currentOrder.id, remoteId = currentOrder.payment.paypal_order_id;
+        paymentBusy = true;
+        show(paypalError, '');
+        renderPayment();
+        try {await confirmAuthorization(orderId, remoteId);}
+        catch (issue) {
+          show(paypalError, issue.message);
+          try {const saved = await refreshPayment(orderId); if (saved.payment.state === 'authorized') show(paypalError, '');} catch {}
+        }
+        finally {paymentBusy = false; renderPayment();}
+      });
+
+      function prepareOrderAction(action) {
+        if (paymentBusy || orderBusy || !currentOrder) return;
+        const allowed = action === 'capture' ? currentOrder.can_capture : action === 'void' ? currentOrder.can_void : currentOrder.can_receive;
+        if (!allowed) return;
+        pendingOrderAction = {action, orderId:currentOrder.id, version:currentOrder.version};
+        const amount = costFormatter.format(Number(currentOrder.grand_total));
+        document.getElementById('order-action-title').textContent = action === 'capture' ? 'Complete test payment?' : action === 'void' ? 'Release hold and cancel?' : 'Confirm full delivery?';
+        document.getElementById('order-action-description').textContent = action === 'capture'
+          ? 'Capture the approved ' + amount + ' sandbox payment. Inventory will update when you receive the goods.'
+          : action === 'void' ? 'Release the uncaptured ' + amount + ' sandbox hold and cancel ' + currentOrder.number + '.'
+          : 'Confirm that all ' + currentOrder.units + ' units across ' + currentOrder.item_count + ' products have arrived. The saved quantities will be added to inventory once.';
+        actionAccept.textContent = action === 'capture' ? 'Confirm capture ' + amount : action === 'void' ? 'Confirm void & cancel' : 'Confirm received stock';
+        renderPayment();
+        actionAccept.focus();
+      }
+      paypalCapture.addEventListener('click', () => prepareOrderAction('capture'));
+      paypalVoid.addEventListener('click', () => prepareOrderAction('void'));
+      receiveStock.addEventListener('click', () => prepareOrderAction('receive'));
+      actionBack.addEventListener('click', () => {if (!paymentBusy) {pendingOrderAction = null; renderPayment();}});
+      actionAccept.addEventListener('click', async () => {
+        if (paymentBusy || orderBusy || !pendingOrderAction || currentOrder?.id !== pendingOrderAction.orderId) return;
+        const {action, orderId, version} = pendingOrderAction;
+        pendingOrderAction = null;
+        paymentBusy = true;
+        show(paypalError, '');
+        renderPayment();
+        let deliveryConfirmed = false;
+        try {
+          const body = {expected_version:version};
+          if (action === 'receive') {
+            if (!receivingRequests.has(orderId)) receivingRequests.set(orderId, crypto.randomUUID());
+            body.request_id = receivingRequests.get(orderId);
+          }
+          const path = '/api/orders/' + orderId + (action === 'receive' ? '/receive' : '/paypal/' + action);
+          const saved = await api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+          const order = action === 'receive' ? saved.order : saved;
+          if (currentOrder?.id === orderId) displayOrder(order);
+          deliveryConfirmed = !!order.receipt;
+        } catch (issue) {
+          let recovered = false;
+          try {
+            const order = await api('/api/orders/' + orderId);
+            if (currentOrder?.id === orderId) displayOrder(order);
+            deliveryConfirmed = !!order.receipt;
+            recovered = action === 'receive' ? deliveryConfirmed : action === 'capture' ? order.payment?.state === 'captured'
+              : order.status === 'cancelled' && ['voided','expired'].includes(order.payment?.state);
+          } catch {}
+          if (!recovered) show(paypalError, issue.message + ' Refresh payment status before retrying.');
+        } finally {
+          if (deliveryConfirmed) {
+            receivingRequests.delete(orderId);
+            await loadProducts();
+            await loadRestock();
+            await loadPurchasePlan();
+          }
+          await loadOrders();
+          paymentBusy = false;
+          renderPayment();
+        }
+      });
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!form.reportValidity() || addButton.disabled) return;
+        show(success, '');
+        show(error, '');
+        const product = {
+          sku: document.getElementById('sku').value.trim(),
+          name: document.getElementById('name').value.trim(),
+          stock: Number(document.getElementById('stock').value),
+          unit_cost: document.getElementById('unit-cost').value,
+          currency: 'USD'
+        };
+        addButton.disabled = true;
+        addButton.textContent = 'Adding…';
+        try {
+          const saved = await api('/api/products', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(product)
+          });
+          form.reset();
+          show(success, saved.name + ' added successfully.');
+          await loadProducts();
+          await loadRestock();
+          document.getElementById('sku').focus();
+        } catch (issue) {
+          show(error, issue instanceof TypeError ? 'Could not save the product. Please try again.' : issue.message);
+        } finally {
+          addButton.disabled = false;
+          addButton.textContent = 'Add product';
+        }
+      });
+
+      refreshButton.addEventListener('click', async () => {
+        await loadProducts();
+        await loadRestock();
+      });
+      cancelStock.addEventListener('click', () => {
+        if (!saveStock.disabled) stockDialog.close();
+      });
+      stockDialog.addEventListener('cancel', event => {
+        if (saveStock.disabled) event.preventDefault();
+      });
+      stockDialog.addEventListener('close', () => {
+        const currentButton = selectedProduct
+          ? rows.querySelector('[data-product-id="' + selectedProduct.id + '"]')
+          : null;
+        if (currentButton) currentButton.focus();
+        else if (stockOpener && stockOpener.isConnected) stockOpener.focus();
+      });
+      stockForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!selectedProduct || saveStock.disabled || !stockForm.reportValidity()) return;
+        show(stockError, '');
+        saveStock.disabled = true;
+        cancelStock.disabled = true;
+        saveStock.textContent = 'Saving…';
+        try {
+          const saved = await api('/api/products/' + selectedProduct.id + '/stock', {
+            method:'PATCH',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({stock:Number(newStock.value)})
+          });
+          show(error, '');
+          show(success, saved.name + ': stock updated to ' + saved.stock + '.');
+          await loadProducts();
+          await loadRestock();
+          stockDialog.close();
+        } catch (issue) {
+          show(stockError, issue instanceof TypeError ? 'Could not update stock. Please try again.' : issue.message);
+        } finally {
+          saveStock.disabled = false;
+          cancelStock.disabled = false;
+          saveStock.textContent = 'Save stock';
+        }
+      });
+      saleQuantity.addEventListener('input', () => {
+        if (!saveSale.disabled) saleRequestId = crypto.randomUUID();
+        updateSalePreview();
+      });
+      cancelSale.addEventListener('click', () => {
+        if (!saveSale.disabled) saleDialog.close();
+      });
+      saleDialog.addEventListener('cancel', event => {
+        if (saveSale.disabled) event.preventDefault();
+      });
+      saleDialog.addEventListener('close', () => {
+        const currentButton = saleProduct
+          ? rows.querySelector('[data-sale-product-id="' + saleProduct.id + '"]')
+          : null;
+        if (currentButton && !currentButton.disabled) currentButton.focus();
+        else if (saleOpener && saleOpener.isConnected) saleOpener.focus();
+        else refreshButton.focus();
+      });
+      saleForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!saleProduct || saveSale.disabled || !saleForm.reportValidity()) return;
+        show(saleError, '');
+        saveSale.disabled = true;
+        cancelSale.disabled = true;
+        saleQuantity.disabled = true;
+        saveSale.textContent = 'Saving…';
+        try {
+          const receipt = await api('/api/sales', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({product_id:saleProduct.id, quantity:Number(saleQuantity.value), request_id:saleRequestId})
+          });
+          show(document.getElementById('sales-feedback'), receipt.replayed
+            ? 'This sale was already saved. Stock has been checked.'
+            : receipt.sale.name + ': ' + receipt.sale.quantity + ' sold. Remaining stock: ' + receipt.product.stock + '.');
+          await loadProducts();
+          await loadSales();
+          await loadRestock();
+          saleDialog.close();
+        } catch (issue) {
+          show(saleError, issue instanceof TypeError
+            ? 'Could not confirm the sale. Retry here without changing quantity.' : issue.message);
+        } finally {
+          saveSale.disabled = false;
+          cancelSale.disabled = false;
+          saleQuantity.disabled = false;
+          saveSale.textContent = 'Save sale';
+        }
+      });
+      refreshSales.addEventListener('click', async () => {
+        await loadSales();
+        await loadRestock();
+      });
+      window.addEventListener?.('resupply-history-changed', async () => {
+        await loadRestock();
+      });
+      window.addEventListener?.('resupply-planning-changed', async () => {
+        await loadRestock();
+      });
+      const openBudget = async event => {
+        const command = event.detail;
+        const plan = command?.plan;
+        if (!plan || orderBusy || approvalBusy || paymentBusy || pendingDraftRequest || window.resupplyPurchasingBusy) return;
+        const settings = {lead_time_days:plan.lead_time_days,coverage_days:plan.coverage_days,buffer_days:plan.buffer_days};
+        if (!/^\d{1,7}\.\d{2}$/.test(plan.budget) || Number(plan.budget) > 1000000 ||
+            !Number.isInteger(settings.lead_time_days) || settings.lead_time_days < 1 || settings.lead_time_days > 30 ||
+            !Number.isInteger(settings.coverage_days) || settings.coverage_days < 1 || settings.coverage_days > 30 ||
+            !Number.isInteger(settings.buffer_days) || settings.buffer_days < 0 || settings.buffer_days > 14) return;
+        if (window.resupplyNavigate && !window.resupplyNavigate('purchasing')) return;
+        planningSettings = settings;purchaseBudget = plan.budget;
+        document.getElementById('purchase-budget').value = plan.budget;
+        document.getElementById('lead-time').value = String(settings.lead_time_days);
+        document.getElementById('coverage-days').value = String(settings.coverage_days);
+        document.getElementById('buffer-days').value = String(settings.buffer_days);
+        for (const id of ['purchase-budget','lead-time','coverage-days','buffer-days']) {
+          document.getElementById(id).dispatchEvent?.(new Event('input'));
+        }
+        command.applied = true;
+        await loadRestock();
+        document.getElementById('purchase-title').scrollIntoView?.({behavior:'smooth',block:'start'});
+      };
+      window.addEventListener?.('resupply-voice-budget', openBudget);
+      window.addEventListener?.('resupply-demo-budget', openBudget);
+      window.addEventListener?.('resupply-easy-data-changed', async () => {
+        await loadProducts();await loadSuppliers();await loadSales();await loadOrders();await loadRestock();
+      });
+      window.addEventListener?.('resupply-demo-data-ready', async () => {
+        await loadProducts();await loadSuppliers();await loadSales();await loadOrders();await loadRestock();
+      });
+      loadProducts();
+      loadSuppliers();
+      loadSales();
+      loadOrders();
+      loadRestock();
+    })();
+  </script>
+  <script src="/assets/sales-history.js" defer></script>
+  <script src="/assets/demand-forecast.js" defer></script>
+  <script src="/assets/forecast-purchasing.js" defer></script>
+  <script src="/assets/voice-assistant.js" defer></script>
+  <script src="/assets/demo-shop.js" defer></script>
+  <script src="/assets/easy-shop.js" defer></script>
+</body>
+</html>

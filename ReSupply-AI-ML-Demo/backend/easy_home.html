@@ -1,0 +1,62 @@
+<section class="easy-welcome" aria-labelledby="easy-title">
+  <div><span class="easy-kicker">EASY START · YOUR SEPARATE SHOP</span><h2 id="easy-title">Update stock. We prepare the rest.</h2><p>Ek baar setup karo. Phir sirf batao kitna bika — low stock par order ready milega.</p></div>
+  <span class="easy-mode" id="easy-mode">Checking your shop…</span>
+</section>
+<ol class="easy-steps" aria-label="Your daily workflow"><li><b>01</b><span>Set up once<small>Products, supplier & limit</small></span></li><li><b>02</b><span>Update stock<small>Sold units or remaining count</small></span></li><li><b>03</b><span>App prepares order<small>Demand, timing & budget</small></span></li><li><b>04</b><span>You pay<small>Confirm in PayPal Sandbox</small></span></li></ol>
+<div class="easy-notice" id="easy-notice" role="status">Loading your saved shop…</div>
+<section class="panel easy-ml-proof" id="easy-ml-proof" hidden aria-labelledby="easy-ml-proof-title">
+  <div><span class="easy-kicker">REAL ML · SYNTHETIC SALES DATA</span><h3 id="easy-ml-proof-title">Your demand models are working.</h3><p id="easy-ml-proof-copy"></p></div>
+  <div class="easy-ml-metrics"><div><strong id="easy-ml-days">—</strong><small>completed days / product</small></div><div><strong id="easy-ml-models">—</strong><small>current trained reports</small></div><div><strong id="easy-ml-selected">—</strong><small>products using Random Forest</small></div></div>
+  <button class="secondary" type="button" id="easy-ml-open">Show working ML forecast →</button>
+</section>
+<div class="easy-error" id="easy-error" role="alert" hidden></div>
+<div class="easy-work-grid">
+  <section class="panel easy-card" aria-labelledby="easy-stock-title"><div class="easy-card-head"><span class="easy-icon">↘</span><div><h3 id="easy-stock-title">What sold today?</h3><p>Stock save hote hi restocking check ho jayegi.</p></div></div>
+    <form id="easy-stock-form" class="easy-form">
+      <label for="easy-sale-product">Product<select id="easy-sale-product" required><option value="">Add a product below first</option></select></label>
+      <div class="field-pair"><label for="easy-stock-mode">What are you entering?<select id="easy-stock-mode"><option value="sold">Units sold</option><option value="remaining">Stock remaining after sales</option></select></label><label for="easy-stock-quantity"><span id="easy-quantity-label">How many units sold?</span><input id="easy-stock-quantity" type="number" min="1" max="1000000" step="1" required placeholder="e.g. 5"></label></div>
+      <p class="hint" id="easy-stock-hint">Choose a product to see the current stock.</p>
+      <button class="primary" id="easy-stock-save" type="submit">Save stock & prepare next step</button>
+    </form>
+    <div class="easy-stock-list" id="easy-stock-list" aria-label="Current stock"></div>
+    <a class="easy-inline-link" data-view="inventory" href="/inventory">All products & stock corrections →</a>
+  </section>
+  <section class="panel easy-card easy-order-card" aria-labelledby="easy-order-title"><div class="easy-card-head"><span class="easy-icon">✓</span><div><h3 id="easy-order-title">Your next purchase</h3><p>Automatically prepared within your saved limit.</p></div></div>
+    <div id="easy-order-content" class="easy-order-content"><p class="easy-empty">Set up your products and turn on automatic restocking below.</p></div>
+    <button class="primary easy-pay" id="easy-pay" type="button" hidden>Pay with PayPal</button>
+    <button class="primary easy-pay" id="easy-receive" type="button" hidden>Goods arrived — receive stock</button>
+    <button class="secondary" id="easy-open-order" type="button" hidden>View order / payment details</button>
+    <p class="hint">PayPal Sandbox · USD test money. Stock is added when you confirm goods arrived.</p>
+    <button class="easy-inline-button" id="easy-refresh" type="button">Refresh suggestions</button>
+  </section>
+</div>
+<details id="easy-setup" class="easy-disclosure" open><summary><span>One-time shop setup</span><small>Add products and choose your auto-restock limit</small></summary>
+  <div class="easy-setup-grid">
+    <section class="easy-setup-card"><span class="easy-kicker">STEP 1 · PRODUCTS</span><h3>Add product + supplier together</h3>
+      <form id="easy-product-form" class="easy-form">
+        <label for="easy-name">Product name<input id="easy-name" maxlength="120" required placeholder="e.g. Blue Pen"></label>
+        <div class="field-pair"><label for="easy-stock">Current stock<input id="easy-stock" type="number" min="0" max="1000000" step="1" required placeholder="20"></label><label for="easy-cost">Purchase cost / unit (USD)<input id="easy-cost" type="number" min="0.01" max="9999999999.99" step="0.01" required placeholder="0.60"></label></div>
+        <label for="easy-supplier">Your usual supplier<input id="easy-supplier" list="easy-suppliers" maxlength="120" required placeholder="e.g. Metro Wholesale"><datalist id="easy-suppliers"></datalist><small>We save the supplier, price quote and selection together.</small></label>
+        <div class="field-pair"><label for="easy-daily">Usually sold per day<input id="easy-daily" type="number" min="0" max="1000000" step="1" required placeholder="e.g. 5"><small>Your starting estimate. Confirmed sales replace it later.</small></label><label for="easy-lead">Supplier delivery (days)<input id="easy-lead" type="number" min="1" max="30" step="1" required value="3"></label></div>
+        <details class="easy-small-details"><summary>Custom product code (optional)</summary><label for="easy-sku">SKU<input id="easy-sku" maxlength="60" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" placeholder="Leave blank — generated automatically"></label></details>
+        <button class="primary" id="easy-add-product" type="submit">Save product & supplier</button>
+        <p id="easy-product-feedback" class="hint" role="status"></p>
+      </form>
+    </section>
+    <section class="easy-setup-card"><span class="easy-kicker">STEP 2 · AUTOMATION</span><h3>Set your limits once</h3>
+      <form id="easy-policy-form" class="easy-form">
+        <label for="easy-limit">Maximum total per order (USD)<input id="easy-limit" type="number" min="0.01" max="1000000" step="0.01" required value="100.00"><small>Includes products, shipping and tax. Payment still needs you.</small></label>
+        <div class="field-pair"><label for="easy-shipping">Shipping per order (USD)<input id="easy-shipping" type="number" min="0" max="1000000" step="0.01" required value="0.00"></label><label for="easy-tax">Tax per order (USD)<input id="easy-tax" type="number" min="0" max="1000000" step="0.01" required value="0.00"></label></div>
+        <details class="easy-small-details"><summary>Coverage & safety stock</summary><div class="field-pair"><label for="easy-coverage">Days of stock<input id="easy-coverage" type="number" min="1" max="30" step="1" required value="7"></label><label for="easy-buffer">Extra safety days<input id="easy-buffer" type="number" min="0" max="14" step="1" required value="2"></label></div></details>
+        <label class="easy-check"><input id="easy-auto-history" type="checkbox"><span>I record all sales here. Save completed daily totals automatically from my entries.</span></label>
+        <label class="easy-check"><input id="easy-zero-days" type="checkbox"><span>While tracking is on, a day with no entries means zero sales. <small>Leave off if entries may be missing.</small></span></label>
+        <label class="easy-check easy-consent"><input id="easy-enabled" type="checkbox" required><span>Enable automatic demand checks, eligible ML training and forecast use, and unpaid draft preparation within these limits.</span></label>
+        <button class="primary" id="easy-policy-save" type="submit">Save & turn on auto restock</button>
+        <button class="secondary" id="easy-pause" type="button" hidden>Pause auto restock</button>
+        <p class="hint">Shipping/tax are your confirmed fixed charges. Update them when they change. Historical records are created only from tracking start onward.</p>
+      </form>
+    </section>
+  </div>
+</details>
+<details class="easy-disclosure" id="easy-ai-details"><summary><span>How did AI decide?</span><small>See demand data, model readiness and the selected forecast</small></summary><div class="easy-explanation"><p>Your daily estimate starts planning immediately. Confirmed sales replace it. With 56 recent consecutive eligible days, the app trains and tests Random Forest automatically. It uses ML only if tested error is at least 5% lower than the 7-day average.</p><p>Low stock means the available quantity is at or below estimated demand during supplier delivery plus safety days. Coverage sets the refill size. Budget allocation uses urgency rules.</p><div id="easy-ai-list"></div><a data-view="forecast" href="/forecast" class="easy-inline-link">Detailed forecasts, charts & manual review →</a></div></details>
+<details class="easy-disclosure" id="easy-llm-panel"><summary><span>Optional: describe an entry in your own words</span><small>AI fills the form; you check and save it</small></summary><form class="easy-form" id="easy-llm-form"><p id="easy-llm-status" class="hint">Checking optional AI typing…</p><label for="easy-llm-text">Describe one product or sale<textarea id="easy-llm-text" maxlength="1000" rows="3" placeholder="Add Blue Pen, stock 20, USD 0.60 each, supplier Metro, delivery 2 days, usually 5 sold per day." required></textarea></label><label class="easy-check"><input id="easy-llm-consent" type="checkbox" required><span>Send this sentence to OpenAI to draft the form fields.</span></label><button class="secondary" id="easy-llm-fill" type="submit" disabled>Fill form with AI</button><p id="easy-llm-feedback" role="status" class="hint"></p></form></details>

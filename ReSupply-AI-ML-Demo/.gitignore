@@ -1,0 +1,25 @@
+@'
+
+# Private configuration
+.env
+.env.*
+!.env.example
+
+# Python environments and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local databases
+*.db
+*.db-*
+*.sqlite*
+
+# Generated files
+*.log
+node_modules/
+recordings/
+*.zip
+'@ | Add-Content -Path .gitignore -Encoding utf8

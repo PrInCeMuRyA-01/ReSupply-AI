@@ -1,0 +1,140 @@
+1
+00:00:00,000 --> 00:00:01,440
+Hi, I'm Prince.
+
+2
+00:00:01,440 --> 00:00:06,720
+ReSupply AI helps small shop owners decide what
+to restock, stay
+
+3
+00:00:06,720 --> 00:00:12,000
+within a budget, and track purchasing through
+payment and stock receipt.
+
+4
+00:00:12,000 --> 00:00:21,000
+This is an isolated demo shop with three
+products and sixty synthetic sales days each.
+
+5
+00:00:21,000 --> 00:00:27,000
+Its stock and orders stay separate from the
+existing shop.
+
+6
+00:00:27,000 --> 00:00:31,615
+Here, a real Random Forest forecasts daily
+demand.
+
+7
+00:00:31,615 --> 00:00:36,231
+It learns from recent sales and weekday
+patterns.
+
+8
+00:00:36,231 --> 00:00:42,577
+We test on later dates and compare against a
+seven-day mean.
+
+9
+00:00:42,577 --> 00:00:50,654
+We select the forest only when tested error is
+at least five percent lower.
+
+10
+00:00:50,654 --> 00:00:53,538
+Otherwise, we keep the mean.
+
+11
+00:00:53,538 --> 00:00:57,000
+The owner reviews its purchase impact.
+
+12
+00:00:57,000 --> 00:01:06,677
+The planner combines demand with stock, supplier
+lead times, coverage and buffer.
+
+13
+00:01:06,677 --> 00:01:13,129
+This one-hundred-dollar product budget allocates
+purchases by urgency.
+
+14
+00:01:13,129 --> 00:01:22,000
+Quotes are selected by the owner, and costs use
+exact cents.
+
+15
+00:01:22,000 --> 00:01:29,615
+I save a draft and review its quantities,
+suppliers and total.
+
+16
+00:01:29,615 --> 00:01:35,154
+Shipping, tax and the spending limit are
+explicit.
+
+17
+00:01:35,154 --> 00:01:40,000
+Only the owner can approve this order.
+
+18
+00:01:40,000 --> 00:01:46,273
+Now I approve checkout with a Sandbox Personal
+buyer.
+
+19
+00:01:46,273 --> 00:01:52,545
+The status confirms test funds are held, not
+captured.
+
+20
+00:01:52,545 --> 00:01:55,333
+I separately confirm Capture.
+
+21
+00:01:55,333 --> 00:02:03,000
+This completes the test payment, while stock
+remains unchanged until receiving.
+
+22
+00:02:03,000 --> 00:02:09,875
+For this demo, I simulate goods arriving and
+confirm full receipt.
+
+23
+00:02:09,875 --> 00:02:13,000
+The approved quantities update inventory.
+
+24
+00:02:13,000 --> 00:02:17,375
+The receipt records stock before and after.
+
+25
+00:02:17,375 --> 00:02:23,000
+Refreshing preserves the receipt without adding
+those units again.
+
+26
+00:02:23,000 --> 00:02:29,947
+The assistant also supports editable voice or
+typed stock and budget queries.
+
+27
+00:02:29,947 --> 00:02:34,000
+These previews cannot approve orders or pay.
+
+28
+00:02:34,000 --> 00:02:37,000
+ReSupply connects demand to owner-controlled
+purchasing.
+
+29
+00:02:37,000 --> 00:02:42,000
+This prototype uses synthetic data, USD and one
+Sandbox merchant.
+
+30
+00:02:42,000 --> 00:02:45,000
+The runnable source is MIT licensed.
